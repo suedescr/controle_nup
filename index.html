@@ -7,7 +7,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 20px;
             background-color: #f5f5f5;
         }
         .container {
@@ -17,50 +18,41 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        header {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #4CAF50;
+            overflow-x: auto;
         }
         header h1 {
-            margin: 0;
             color: #333;
             font-size: 24px;
+            margin: 0 0 20px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
         }
         .controls {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
-            align-items: center;
             flex-wrap: wrap;
+            margin-bottom: 20px;
         }
-        input[type="text"], input[type="date"], input[type="url"], select, textarea {
+        input, select, textarea, button {
             padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
             font-size: 14px;
-            width: 100%;
+            border-radius: 4px;
+            border: 1px solid #ddd;
             box-sizing: border-box;
         }
+        textarea {
+            min-height: 60px;
+            width: 100%;
+            resize: vertical;
+        }
         button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
             background: #4CAF50;
             color: white;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            cursor: pointer;
+            border: none;
         }
         button:hover {
             opacity: 0.9;
-        }
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
         }
         table {
             width: 100%;
@@ -79,113 +71,251 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        .btn-delete {
-            background: #f44336;
-        }
-        #filtro {
-            flex: 1;
-            min-width: 200px;
+        td input[type="text"], td input[type="date"], td input[type="url"] {
+            width: 100%;
         }
         .prazo-proximo { background-color: #fff3e0 !important; }
         .prazo-vencido { background-color: #ffebee !important; }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Controle de Processos - NUP</h1>
-        </header>
-
-        <div class="controls">
-            <input type="text" id="filtro" placeholder="Filtrar processos..." aria-label="Filtrar processos" oninput="filtrarTabela()">
-            <select id="ordem" aria-label="Ordenar processos" onchange="ordenarTabela()">
-                <option value="prazo_asc">Prazo (mais próximo)</option>
-                <option value="prazo_desc">Prazo (mais distante)</option>
-                <option value="data_asc">Data Entrada (antigos)</option>
-                <option value="data_desc">Data Entrada (recentes)</option>
-            </select>
-            <button onclick="salvarArquivo()" aria-label="Salvar Backup">💾 Salvar</button>
-            <button onclick="document.getElementById('fileInput').click()" aria-label="Carregar Backup">📂 Carregar</button>
-            <button onclick="exportarExcel()" aria-label="Exportar para Excel">📊 Exportar</button>
-            <input type="file" id="fileInput" accept=".json" onchange="carregarDeArquivo(this.files[0])" style="display: none;">
-        </div>
-
-        <div class="table-container">
-            <table id="tabelaProcessos">
-                <thead>
-                    <tr>
-                        <th>Número</th>
-                        <th>Data Entrada</th>
-                        <th>Assunto</th>
-                        <th>Andamento</th>
-                        <th>Tipo de Processo</th>
-                        <th>Link</th>
-                        <th>Prazo</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><input type="text" placeholder="Número do processo" required></td>
-                        <td><input type="date" required></td>
-                        <td><input type="text" placeholder="Assunto" required></td>
-                        <td><textarea placeholder="Andamento" required></textarea></td>
-                        <td><input type="text" placeholder="Tipo de Processo" required></td>
-                        <td><input type="url" placeholder="Link para o processo"></td>
-                        <td><input type="date" required></td>
-                        <td><button class="btn-delete" onclick="excluirLinha(this)" aria-label="Excluir">&times;</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <button onclick="adicionarLinha()" style="margin-top: 15px" aria-label="Adicionar Processo">+ Adicionar Processo</button>
+<div class="container">
+    <header><h1>Controle de Processos - NUP</h1></header>
+    <div class="controls">
+        <input type="text" id="filtro" placeholder="Filtrar processos..." oninput="filtrarTabela()">
+        <select id="ordem" onchange="ordenarTabela()">
+            <option value="prazo_asc">Prazo (mais próximo)</option>
+            <option value="prazo_desc">Prazo (mais distante)</option>
+            <option value="data_asc">Data Entrada (antigos)</option>
+            <option value="data_desc">Data Entrada (recentes)</option>
+        </select>
+        <button onclick="salvarArquivo()">💾 Salvar</button>
+        <button onclick="document.getElementById('fileInput').click()">📂 Carregar</button>
+        <input type="file" id="fileInput" accept=".json" onchange="carregarDeArquivo(this.files[0])" hidden>
+        <button onclick="exportarExcel()">📊 Exportar</button>
     </div>
 
-    <script>
-        function salvarArquivo() {
-            const dados = coletarDados();
-            const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'processos-sei.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            alert('✅ Arquivo salvo com sucesso!');
+    <div class="table-container">
+        <table id="tabelaProcessos">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Data Entrada</th>
+                    <th>Assunto</th>
+                    <th>Andamento</th>
+                    <th>Link</th>
+                    <th>Prazo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <button onclick="adicionarLinha()" style="margin-top: 15px">+ Adicionar Processo</button>
+</div>
+
+<script>
+function filtrarTabela() {
+    const filtro = document.getElementById('filtro').value.toLowerCase();
+    document.querySelectorAll('#tabelaProcessos tbody tr').forEach(tr => {
+        const texto = Array.from(tr.querySelectorAll('input, textarea'))
+            .map(el => el.value)
+            .join(' ')
+            .toLowerCase();
+        tr.style.display = texto.includes(filtro) ? '' : 'none';
+    });
+}
+
+function ordenarTabela() {
+    const tbody = document.querySelector('#tabelaProcessos tbody');
+    const linhas = Array.from(tbody.children);
+    const ordem = document.getElementById('ordem').value;
+    
+    linhas.sort((a, b) => {
+        let dateA, dateB;
+        if (ordem.startsWith('prazo')) {
+            dateA = a.querySelector('td:nth-child(6) input').value;
+            dateB = b.querySelector('td:nth-child(6) input').value;
+        } else {
+            dateA = a.querySelector('td:nth-child(2) input').value;
+            dateB = b.querySelector('td:nth-child(2) input').value;
         }
 
-        function exportarExcel() {
-            const dados = coletarDados();
-            const csv = gerarCSV(dados);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'processos-sei.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-            alert('✅ Planilha exportada com sucesso!');
-        }
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        
+        const comparison = ordem.endsWith('asc') ? 
+            new Date(dateA) - new Date(dateB) : 
+            new Date(dateB) - new Date(dateA);
+        
+        return comparison;
+    });
 
-        function coletarDados() {
-            return Array.from(document.querySelectorAll('#tabelaProcessos tbody tr')).map(tr => ({
-                numero: tr.querySelector('td:nth-child(1) input').value,
-                data: tr.querySelector('td:nth-child(2) input').value,
-                assunto: tr.querySelector('td:nth-child(3) input').value,
-                andamento: tr.querySelector('td:nth-child(4) textarea').value,
-                tipo: tr.querySelector('td:nth-child(5) input').value,
-                link: tr.querySelector('td:nth-child(6) input').value,
-                prazo: tr.querySelector('td:nth-child(7) input').value
-            }));
-        }
+    linhas.forEach(linha => tbody.appendChild(linha));
+}
 
-        function gerarCSV(dados) {
-            const linhas = ['Número;Data Entrada;Assunto;Andamento;Tipo de Processo;Link;Prazo'];
-            dados.forEach(d => {
-                linhas.push(Object.values(d).map(v => `"${v}"`).join(';'));
-            });
-            return linhas.join('\n');
+function verificarPrazos() {
+    const hoje = new Date();
+    document.querySelectorAll('#tabelaProcessos tbody tr').forEach(tr => {
+        const prazoInput = tr.querySelector('td:nth-child(6) input');
+        if (prazoInput.value) {
+            const prazo = new Date(prazoInput.value);
+            const dias = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
+            tr.className = '';
+            if (dias < 0) {
+                tr.className = 'prazo-vencido';
+            } else if (dias <= 7) {
+                tr.className = 'prazo-proximo';
+            }
         }
-    </script>
+    });
+}
+
+function salvarArquivo() {
+    try {
+        const dados = coletarDados();
+        const hoje = new Date().toLocaleDateString().replace(/\//g, '-');
+        baixarArquivo(JSON.stringify(dados, null, 2), `processos-${hoje}.json`, 'application/json');
+        alert('✅ Arquivo salvo com sucesso!');
+    } catch (erro) {
+        alert('❌ Erro ao salvar: ' + erro.message);
+    }
+}
+
+function exportarExcel() {
+    try {
+        const dados = coletarDados();
+        const csv = gerarCSV(dados);
+        const hoje = new Date().toLocaleDateString().replace(/\//g, '-');
+        baixarArquivo(csv, `processos-${hoje}.csv`, 'text/csv;charset=utf-8;');
+        alert('✅ Planilha exportada com sucesso!');
+    } catch (erro) {
+        alert('❌ Erro ao exportar: ' + erro.message);
+    }
+}
+
+function carregarDeArquivo(arquivo) {
+    if (!arquivo) return;
+    
+    const leitor = new FileReader();
+    leitor.onload = function(e) {
+        try {
+            const dados = JSON.parse(e.target.result);
+            preencherTabela(dados);
+            verificarPrazos();
+            alert('✅ Dados carregados com sucesso!');
+        } catch (erro) {
+            alert('❌ Erro ao carregar arquivo: ' + erro.message);
+        }
+    };
+    leitor.readAsText(arquivo);
+}
+
+function coletarDados() {
+    return Array.from(document.querySelectorAll('#tabelaProcessos tbody tr')).map(tr => ({
+        numero: tr.children[0].querySelector('input').value,
+        data: tr.children[1].querySelector('input').value,
+        assunto: tr.children[2].querySelector('input').value,
+        andamento: tr.children[3].querySelector('textarea').value,
+        link: tr.children[4].querySelector('input').value,
+        prazo: tr.children[5].querySelector('input').value
+    }));
+}
+
+function preencherTabela(dados) {
+    const tbody = document.querySelector('#tabelaProcessos tbody');
+    tbody.innerHTML = '';
+    dados.forEach(d => {
+        const linha = `<tr>
+            <td><input type="text" value="${d.numero || ''}" placeholder="Número" required></td>
+            <td><input type="date" value="${d.data || ''}" required onchange="verificarPrazos()"></td>
+            <td><input type="text" value="${d.assunto || ''}" placeholder="Assunto" required></td>
+            <td><textarea placeholder="Andamento" required>${d.andamento || ''}</textarea></td>
+            <td><input type="url" value="${d.link || ''}" placeholder="Link" onchange="atualizarLink(this)" required></td>
+            <td><input type="date" value="${d.prazo || ''}" required onchange="verificarPrazos()"></td>
+            <td><button onclick="removerLinha(this)">❌</button></td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', linha);
+    });
+}
+
+function gerarCSV(dados) {
+    const BOM = '\uFEFF';
+    const linhas = [
+        ['Numero', 'Data Entrada', 'Assunto', 'Andamento', 'Link', 'Prazo'],
+        ...dados.map(d => [
+            d.numero,
+            formatarData(d.data),
+            d.assunto,
+            d.andamento,
+            d.link,
+            formatarData(d.prazo)
+        ])
+    ];
+    return BOM + linhas.map(row => 
+        row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`)
+        .join(';')
+    ).join('\n');
+}
+
+function formatarData(data) {
+    if (!data) return '';
+    const [ano, mes, dia] = data.split('-');
+    return `${dia}/${mes}/${ano}`;
+}
+
+function adicionarLinha() {
+    const tbody = document.querySelector('#tabelaProcessos tbody');
+    const linha = `<tr>
+        <td><input type="text" placeholder="Número" required></td>
+        <td><input type="date" required onchange="verificarPrazos()"></td>
+        <td><input type="text" placeholder="Assunto" required></td>
+        <td><textarea placeholder="Andamento" required></textarea></td>
+        <td><input type="url" placeholder="Link" onchange="atualizarLink(this)" required></td>
+        <td><input type="date" required onchange="verificarPrazos()"></td>
+        <td><button onclick="removerLinha(this)">❌</button></td>
+    </tr>`;
+    tbody.insertAdjacentHTML('beforeend', linha);
+}
+
+function atualizarLink(input) {
+    const valor = input.value;
+    if (valor) {
+        input.parentElement.innerHTML = `<a href="${valor}" target="_blank">${valor}</a>`;
+    }
+}
+
+function removerLinha(botao) {
+    if (document.querySelectorAll('#tabelaProcessos tbody tr').length > 1) {
+        botao.closest('tr').remove();
+    } else {
+        alert('A tabela deve manter pelo menos uma linha!');
+    }
+}
+
+function baixarArquivo(conteudo, nomeArquivo, tipo) {
+    const blob = new Blob([conteudo], { type: tipo });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = nomeArquivo;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
+// Inicialização
+window.onload = function() {
+    adicionarLinha();
+    verificarPrazos();
+};
+</script>
 </body>
 </html>
