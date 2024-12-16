@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Processos - NUP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4CAF50;
+        }
+        header h1 {
+            margin: 0;
+            color: #333;
+            font-size: 24px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        input[type="text"], input[type="date"], input[type="url"], select, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .btn-delete {
+            background: #f44336;
+        }
+        #filtro {
+            flex: 1;
+            min-width: 200px;
+        }
+        .prazo-proximo { background-color: #fff3e0 !important; }
+        .prazo-vencido { background-color: #ffebee !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Controle de Processos - NUP</h1>
+        </header>
+
+        <div class="controls">
+            <input type="text" id="filtro" placeholder="Filtrar processos..." aria-label="Filtrar processos" oninput="filtrarTabela()">
+            <select id="ordem" aria-label="Ordenar processos" onchange="ordenarTabela()">
+                <option value="prazo_asc">Prazo (mais próximo)</option>
+                <option value="prazo_desc">Prazo (mais distante)</option>
+                <option value="data_asc">Data Entrada (antigos)</option>
+                <option value="data_desc">Data Entrada (recentes)</option>
+            </select>
+            <button onclick="salvarArquivo()" aria-label="Salvar Backup">💾 Salvar</button>
+            <button onclick="document.getElementById('fileInput').click()" aria-label="Carregar Backup">📂 Carregar</button>
+            <button onclick="exportarExcel()" aria-label="Exportar para Excel">📊 Exportar</button>
+            <input type="file" id="fileInput" accept=".json" onchange="carregarDeArquivo(this.files[0])" style="display: none;">
+        </div>
+
+        <div class="table-container">
+            <table id="tabelaProcessos">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Data Entrada</th>
+                        <th>Assunto</th>
+                        <th>Andamento</th>
+                        <th>Tipo de Processo</th>
+                        <th>Link</th>
+                        <th>Prazo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" placeholder="Número do processo" required></td>
+                        <td><input type="date" required></td>
+                        <td><input type="text" placeholder="Assunto" required></td>
+                        <td><textarea placeholder="Andamento" required></textarea></td>
+                        <td><input type="text" placeholder="Tipo de Processo" required></td>
+                        <td><input type="url" placeholder="Link para o processo"></td>
+                        <td><input type="date" required></td>
+                        <td><button class="btn-delete" onclick="excluirLinha(this)" aria-label="Excluir">&times;</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button onclick="adicionarLinha()" style="margin-top: 15px" aria-label="Adicionar Processo">+ Adicionar Processo</button>
+    </div>
+
+    <script>
+        function salvarArquivo() {
+            const dados = coletarDados();
+            const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'processos-sei.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('✅ Arquivo salvo com sucesso!');
+        }
+
+        function exportarExcel() {
+            const dados = coletarDados();
+            const csv = gerarCSV(dados);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'processos-sei.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('✅ Planilha exportada com sucesso!');
+        }
+
+        function coletarDados() {
+            return Array.from(document.querySelectorAll('#tabelaProcessos tbody tr')).map(tr => ({
+                numero: tr.querySelector('td:nth-child(1) input').value,
+                data: tr.querySelector('td:nth-child(2) input').value,
+                assunto: tr.querySelector('td:nth-child(3) input').value,
+                andamento: tr.querySelector('td:nth-child(4) textarea').value,
+                tipo: tr.querySelector('td:nth-child(5) input').value,
+                link: tr.querySelector('td:nth-child(6) input').value,
+                prazo: tr.querySelector('td:nth-child(7) input').value
+            }));
+        }
+
+        function gerarCSV(dados) {
+            const linhas = ['Número;Data Entrada;Assunto;Andamento;Tipo de Processo;Link;Prazo'];
+            dados.forEach(d => {
+                linhas.push(Object.values(d).map(v => `"${v}"`).join(';'));
+            });
+            return linhas.join('\n');
+        }
+    </script>
+</body>
+</html>
