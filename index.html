@@ -317,8 +317,16 @@ function preencherTabela(dados) {
             <td><button onclick="removerLinha(this)">❌</button></td>
         </tr>`;
         tbody.insertAdjacentHTML('beforeend', linha);
+        
+        // Atualiza os botões de link para as linhas existentes
+        if (d.link) {
+            const ultimaLinha = tbody.lastElementChild;
+            const input = ultimaLinha.querySelector('td:nth-child(5) input');
+            atualizarLink(input);
+        }
     });
 }
+
 
 function gerarCSV(dados) {
     const BOM = '\uFEFF';
@@ -361,8 +369,22 @@ function adicionarLinha() {
 
 function atualizarLink(input) {
     const valor = input.value;
+    const td = input.parentElement;
+    
+    // Remove o botão anterior se existir
+    const botaoAntigo = td.querySelector('button');
+    if (botaoAntigo) {
+        botaoAntigo.remove();
+    }
+    
+    // Se tiver um valor, adiciona o botão de abrir link
     if (valor) {
-        input.parentElement.innerHTML = `<a href="${valor}" target="_blank">${valor}</a>`;
+        const botaoAbrir = document.createElement('button');
+        botaoAbrir.innerHTML = '🔗';
+        botaoAbrir.title = 'Abrir link';
+        botaoAbrir.style.marginLeft = '5px';
+        botaoAbrir.onclick = () => window.open(valor, '_blank');
+        td.appendChild(botaoAbrir);
     }
 }
 
