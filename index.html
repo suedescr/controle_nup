@@ -11,15 +11,27 @@
         <title>Controle de Processos - NUP</title>
     
         
-            <script type="module">
-    // Adicione getDocs nas importações do firestore
+       <script type="module">
+    // Importações do Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-    // ... resto das configurações do Firebase ...
+    // Configuração do Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
+        authDomain: "controle-processo-nup.firebaseapp.com",
+        projectId: "controle-processo-nup",
+        storageBucket: "controle-processo-nup.appspot.com",
+        messagingSenderId: "375467007404",
+        appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
+    };
 
-    // Função para carregar dados do Firestore
-    async function carregarDados() {
+    // Inicializa o Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Função para carregar dados
+    async function carregarDadosFirestore() {
         try {
             const processosRef = collection(db, 'processos');
             const snapshot = await getDocs(processosRef);
@@ -39,15 +51,32 @@
         }
     }
 
-    // Tornar função global
-    window.carregarDados = carregarDados;
+    // Função para salvar dados
+    async function salvarDadosFirestore() {
+        try {
+            const dados = coletarDados();
+            const batch = writeBatch(db);
 
-    // Carregar dados quando a página iniciar
-    document.addEventListener('DOMContentLoaded', () => {
-        carregarDados();
-    });
+            for (const dado of dados) {
+                const docRef = doc(collection(db, 'processos'), dado.numero || `novo_${Date.now()}`);
+                batch.set(docRef, dado);
+            }
 
-    // ... resto do seu código ...
+            await batch.commit();
+            alert('✅ Dados salvos no Firestore com sucesso!');
+            await carregarDadosFirestore();
+        } catch (erro) {
+            console.error("Erro ao salvar no Firestore:", erro);
+            alert('❌ Erro ao salvar no Firestore: ' + erro.message);
+        }
+    }
+
+    // Disponibilizar funções globalmente
+    window.carregarDadosFirestore = carregarDadosFirestore;
+    window.salvarArquivo = salvarDadosFirestore;
+
+    // Carregar dados quando a página carregar
+    document.addEventListener('DOMContentLoaded', carregarDadosFirestore);
 </script>
     
         <!-- Resto do seu código CSS aqui -->
