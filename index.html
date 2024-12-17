@@ -10,47 +10,45 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Controle de Processos - NUP</title>
     
-        <script type="module">
-            // Importe as funções específicas do Firebase
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-            import { getFirestore, collection, doc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-    
-            // Configuração do Firebase
-            const firebaseConfig = {
-                apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
-                authDomain: "controle-processo-nup.firebaseapp.com",
-                projectId: "controle-processo-nup",
-                storageBucket: "controle-processo-nup.appspot.com",
-                messagingSenderId: "375467007404",
-                appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
-            };
-    
-            // Inicializa o Firebase
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-    
-            // Tornando db disponível globalmente
-            window.db = db;
+        
+            <script type="module">
+    // Adicione getDocs nas importações do firestore
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+    // ... resto das configurações do Firebase ...
+
+    // Função para carregar dados do Firestore
+    async function carregarDados() {
+        try {
+            const processosRef = collection(db, 'processos');
+            const snapshot = await getDocs(processosRef);
+            const dados = [];
             
-            // Função de salvar atualizada
-            window.salvarArquivo = async function() {
-                try {
-                    const dados = coletarDados();
-                    const batch = writeBatch(db);
-    
-                    for (const dado of dados) {
-                        const docRef = doc(collection(db, 'processos'), dado.numero || `novo_${Date.now()}`);
-                        batch.set(docRef, dado);
-                    }
-    
-                    await batch.commit();
-                    alert('✅ Dados salvos no Firestore com sucesso!');
-                } catch (erro) {
-                    console.error("Erro ao salvar no Firestore:", erro);
-                    alert('❌ Erro ao salvar no Firestore: ' + erro.message);
-                }
+            snapshot.forEach((doc) => {
+                dados.push(doc.data());
+            });
+            
+            if (dados.length > 0) {
+                preencherTabela(dados);
+                verificarPrazos();
             }
-        </script>
+        } catch (erro) {
+            console.error("Erro ao carregar dados:", erro);
+            alert('Erro ao carregar dados: ' + erro.message);
+        }
+    }
+
+    // Tornar função global
+    window.carregarDados = carregarDados;
+
+    // Carregar dados quando a página iniciar
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarDados();
+    });
+
+    // ... resto do seu código ...
+</script>
     
         <!-- Resto do seu código CSS aqui -->
         <style>
@@ -236,19 +234,21 @@ function verificarPrazos() {
     });
 }
 
-async function salvarArquivo() {
+window.salvarArquivo = async function() {
     try {
-        const dados = coletarDados(); // Coleta os dados da tabela
-        const batch = db.batch(); // Cria uma operação em lote para salvar todos os dados
+        const dados = coletarDados();
+        const batch = writeBatch(db);
 
-        dados.forEach(dado => {
-            // Cria um documento com o número ou gera um nome único
-            const ref = db.collection('processos').doc(dado.numero || `novo_${Date.now()}`);
-            batch.set(ref, dado);
-        });
+        for (const dado of dados) {
+            const docRef = doc(collection(db, 'processos'), dado.numero || `novo_${Date.now()}`);
+            batch.set(docRef, dado);
+        }
 
-        await batch.commit(); // Salva os dados no Firestore
+        await batch.commit();
         alert('✅ Dados salvos no Firestore com sucesso!');
+        
+        // Recarrega os dados após salvar
+        await carregarDados();
     } catch (erro) {
         console.error("Erro ao salvar no Firestore:", erro);
         alert('❌ Erro ao salvar no Firestore: ' + erro.message);
@@ -305,7 +305,11 @@ function coletarDados() {
 
 function preencherTabela(dados) {
     const tbody = document.querySelector('#tabelaProcessos tbody');
-    tbody.innerHTML = '';
+    // Limpa apenas se for o carregamento inicial
+    if (tbody.children.length <= 1) {
+        tbody.innerHTML = '';
+    }
+    
     dados.forEach(d => {
         const linha = `<tr>
             <td><input type="text" value="${d.numero || ''}" placeholder="Número" required></td>
@@ -318,7 +322,6 @@ function preencherTabela(dados) {
         </tr>`;
         tbody.insertAdjacentHTML('beforeend', linha);
         
-        // Atualiza os botões de link para as linhas existentes
         if (d.link) {
             const ultimaLinha = tbody.lastElementChild;
             const input = ultimaLinha.querySelector('td:nth-child(5) input');
