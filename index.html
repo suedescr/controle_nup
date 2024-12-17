@@ -4,6 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Processos - NUP</title>
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Controle de Processos - NUP</title>
+    
+        <script type="module">
+            // Importe as funções específicas do Firebase
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+            import { getFirestore, collection, doc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    
+            // Configuração do Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
+                authDomain: "controle-processo-nup.firebaseapp.com",
+                projectId: "controle-processo-nup",
+                storageBucket: "controle-processo-nup.appspot.com",
+                messagingSenderId: "375467007404",
+                appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
+            };
+    
+            // Inicializa o Firebase
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+    
+            // Tornando db disponível globalmente
+            window.db = db;
+            
+            // Função de salvar atualizada
+            window.salvarArquivo = async function() {
+                try {
+                    const dados = coletarDados();
+                    const batch = writeBatch(db);
+    
+                    for (const dado of dados) {
+                        const docRef = doc(collection(db, 'processos'), dado.numero || `novo_${Date.now()}`);
+                        batch.set(docRef, dado);
+                    }
+    
+                    await batch.commit();
+                    alert('✅ Dados salvos no Firestore com sucesso!');
+                } catch (erro) {
+                    console.error("Erro ao salvar no Firestore:", erro);
+                    alert('❌ Erro ao salvar no Firestore: ' + erro.message);
+                }
+            }
+        </script>
+    
+        <!-- Resto do seu código CSS aqui -->
+        <style>
+            /* Seu CSS atual */
+        </style>
+    </head>
+    
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Processos - NUP</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -178,16 +236,25 @@ function verificarPrazos() {
     });
 }
 
-function salvarArquivo() {
+async function salvarArquivo() {
     try {
-        const dados = coletarDados();
-        const hoje = new Date().toLocaleDateString().replace(/\//g, '-');
-        baixarArquivo(JSON.stringify(dados, null, 2), `processos-${hoje}.json`, 'application/json');
-        alert('✅ Arquivo salvo com sucesso!');
+        const dados = coletarDados(); // Coleta os dados da tabela
+        const batch = db.batch(); // Cria uma operação em lote para salvar todos os dados
+
+        dados.forEach(dado => {
+            // Cria um documento com o número ou gera um nome único
+            const ref = db.collection('processos').doc(dado.numero || `novo_${Date.now()}`);
+            batch.set(ref, dado);
+        });
+
+        await batch.commit(); // Salva os dados no Firestore
+        alert('✅ Dados salvos no Firestore com sucesso!');
     } catch (erro) {
-        alert('❌ Erro ao salvar: ' + erro.message);
+        console.error("Erro ao salvar no Firestore:", erro);
+        alert('❌ Erro ao salvar no Firestore: ' + erro.message);
     }
 }
+
 
 function exportarExcel() {
     try {
@@ -219,14 +286,21 @@ function carregarDeArquivo(arquivo) {
 }
 
 function coletarDados() {
-    return Array.from(document.querySelectorAll('#tabelaProcessos tbody tr')).map(tr => ({
-        numero: tr.children[0].querySelector('input').value,
-        data: tr.children[1].querySelector('input').value,
-        assunto: tr.children[2].querySelector('input').value,
-        andamento: tr.children[3].querySelector('textarea').value,
-        link: tr.children[4].querySelector('input').value,
-        prazo: tr.children[5].querySelector('input').value
-    }));
+    const linhas = document.querySelectorAll('#tabelaProcessos tbody tr');
+    const dados = [];
+
+    linhas.forEach(tr => {
+        const numero = tr.querySelector('td:nth-child(1) input')?.value || "";
+        const data = tr.querySelector('td:nth-child(2) input')?.value || "";
+        const assunto = tr.querySelector('td:nth-child(3) input')?.value || "";
+        const andamento = tr.querySelector('td:nth-child(4) textarea')?.value || "";
+        const link = tr.querySelector('td:nth-child(5) input')?.value || "";
+        const prazo = tr.querySelector('td:nth-child(6) input')?.value || "";
+
+        dados.push({ numero, data, assunto, andamento, link, prazo });
+    });
+
+    return dados;
 }
 
 function preencherTabela(dados) {
