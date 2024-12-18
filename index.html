@@ -466,22 +466,16 @@ async function removerLinha(botao) {
 
     if (numero && confirm('Tem certeza que deseja excluir este processo?')) {
         try {
-            const processosRef = collection(db, 'processos');
-            const q = query(processosRef, where('numero', '==', numero));
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-                await deleteDoc(querySnapshot.docs[0].ref);
-                tr.remove();
-                alert('Processo excluído com sucesso!');
-            }
+            // Chamando a função global de deletar
+            await window.deletarProcesso(numero);
+            tr.remove();
+            alert('Processo excluído com sucesso!');
         } catch (erro) {
             console.error("Erro ao excluir:", erro);
             alert('Erro ao excluir processo: ' + erro.message);
         }
     }
 }
-
 function baixarArquivo(conteudo, nomeArquivo, tipo) {
     const blob = new Blob([conteudo], { type: tipo });
     const link = document.createElement('a');
