@@ -15,7 +15,10 @@
     // Importações do Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
+    import { getFirestore, collection, doc, setDoc, getDocs,deleteDoc, // Adicione esta linha
+    query,     // Se não existir, adicione
+    where      // Adicione esta linha
+} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
     // Configuração do Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
@@ -77,6 +80,26 @@
 
     // Carregar dados quando a página carregar
     document.addEventListener('DOMContentLoaded', carregarDadosFirestore);
+    async function deletarProcesso(numero) {
+    try {
+        const processosRef = collection(db, 'processos');
+        const q = query(processosRef, where('numero', '==', numero));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            const docRef = querySnapshot.docs[0].ref;
+            await deleteDoc(docRef);
+            return true;
+        }
+        return false;
+    } catch (erro) {
+        console.error("Erro ao deletar processo:", erro);
+        throw erro;
+    }
+}
+
+// Torne a função global
+window.deletarProcesso = deletarProcesso;
 </script>
     
         <!-- Resto do seu código CSS aqui -->
@@ -347,8 +370,8 @@ function preencherTabela(dados) {
             <td><textarea placeholder="Andamento" required>${d.andamento || ''}</textarea></td>
             <td><input type="url" value="${d.link || ''}" placeholder="Link" onchange="atualizarLink(this)" required></td>
             <td><input type="date" value="${d.prazo || ''}" required onchange="verificarPrazos()"></td>
-            <td><button onclick="removerLinha(this)">❌</button></td>
-        </tr>`;
+            <td><button onclick="removerLinha(this)" class="btn-excluir" style="background-color: #dc3545;">🗑️</button>
+            </td>`;
         tbody.insertAdjacentHTML('beforeend', linha);
         
         if (d.link) {
@@ -420,11 +443,18 @@ function atualizarLink(input) {
     }
 }
 
-function removerLinha(botao) {
-    if (document.querySelectorAll('#tabelaProcessos tbody tr').length > 1) {
-        botao.closest('tr').remove();
-    } else {
-        alert('A tabela deve manter pelo menos uma linha!');
+async function removerLinha(botao) {
+    const tr = botao.closest('tr');
+    const numero = tr.querySelector('td:first-child input').value;
+
+    if (confirm('Tem certeza que deseja excluir este processo?')) {
+        try {
+            await deletarProcesso(numero);
+            tr.remove();
+            alert('Processo excluído com sucesso!');
+        } catch (erro) {
+            alert('Erro ao excluir processo: ' + erro.message);
+        }
     }
 }
 
