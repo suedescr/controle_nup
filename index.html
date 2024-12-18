@@ -51,7 +51,7 @@
     }
 
     // Função para salvar dados
-   async function salvarDadosFirestore() {
+  async function salvarDadosFirestore() {
     try {
         const dados = coletarDados();
         
@@ -74,6 +74,18 @@
                 batch.set(docRef, dado);
             }
         }
+
+        await batch.commit();
+        alert('✅ Dados salvos no Firestore com sucesso!');
+        location.reload();
+    } catch (erro) {
+        console.error("Erro ao salvar no Firestore:", erro);
+        alert('❌ Erro ao salvar no Firestore: ' + erro.message);
+    }
+}
+
+// Disponibilizar função globalmente
+window.salvarArquivo = salvarDadosFirestore;
 
         await batch.commit();
         alert('✅ Dados salvos no Firestore com sucesso!');
