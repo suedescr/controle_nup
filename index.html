@@ -94,8 +94,8 @@
 async function deletarProcesso(numero) {
     try {
         const processosRef = collection(db, 'processos');
-        // Converte o número para o formato seguro
-        const docId = numero.replace(/[./]/g, '_');
+        // Remove tudo que não é número para criar o ID
+        const docId = numero.replace(/\D/g, '');
         const docRef = doc(processosRef, docId);
         await deleteDoc(docRef);
         return true;
