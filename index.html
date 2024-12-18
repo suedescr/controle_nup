@@ -67,8 +67,10 @@
         
         // Adiciona os novos documentos
         for (const dado of dados) {
-            if (dado.numero.trim() !== '') {  // Só salva se tiver número
-                const docRef = doc(collection(db, 'processos'), dado.numero);
+            if (dado.numero.trim() !== '') {
+                // Cria um ID seguro substituindo caracteres especiais
+                const docId = dado.numero.replace(/[./]/g, '_');
+                const docRef = doc(collection(db, 'processos'), docId);
                 batch.set(docRef, dado);
             }
         }
@@ -92,15 +94,11 @@
 async function deletarProcesso(numero) {
     try {
         const processosRef = collection(db, 'processos');
-        const q = query(processosRef, where('numero', '==', numero));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-            const docRef = querySnapshot.docs[0].ref;
-            await deleteDoc(docRef);
-            return true;
-        }
-        return false;
+        // Converte o número para o formato seguro
+        const docId = numero.replace(/[./]/g, '_');
+        const docRef = doc(processosRef, docId);
+        await deleteDoc(docRef);
+        return true;
     } catch (erro) {
         console.error("Erro ao deletar processo:", erro);
         throw erro;
