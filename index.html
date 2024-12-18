@@ -12,13 +12,18 @@
     
         
        <script type="module">
-    // Importações do Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-    import { getFirestore, collection, doc, setDoc, getDocs,deleteDoc, // Adicione esta linha
-    query,     // Se não existir, adicione
-    where      // Adicione esta linha
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+           import { getFirestore, 
+    collection, 
+    doc, 
+    setDoc, 
+    getDocs,
+    deleteDoc,
+    query,
+    where,
+    writeBatch
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    
     // Configuração do Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
@@ -55,24 +60,36 @@
     }
 
     // Função para salvar dados
-    async function salvarDadosFirestore() {
-        try {
-            const dados = coletarDados();
-            const batch = writeBatch(db);
-
-            for (const dado of dados) {
-                const docRef = doc(collection(db, 'processos'), dado.numero || `novo_${Date.now()}`);
+   async function salvarDadosFirestore() {
+    try {
+        const dados = coletarDados();
+        
+        // Primeiro, exclui todos os documentos existentes
+        const processosRef = collection(db, 'processos');
+        const snapshot = await getDocs(processosRef);
+        const batch = writeBatch(db);
+        
+        // Marca todos os documentos existentes para exclusão
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        
+        // Adiciona os novos documentos
+        for (const dado of dados) {
+            if (dado.numero.trim() !== '') {  // Só salva se tiver número
+                const docRef = doc(collection(db, 'processos'), dado.numero);
                 batch.set(docRef, dado);
             }
-
-            await batch.commit();
-            alert('✅ Dados salvos no Firestore com sucesso!');
-            await carregarDadosFirestore();
-        } catch (erro) {
-            console.error("Erro ao salvar no Firestore:", erro);
-            alert('❌ Erro ao salvar no Firestore: ' + erro.message);
         }
+
+        await batch.commit();
+        alert('✅ Dados salvos no Firestore com sucesso!');
+        await carregarDadosFirestore();
+    } catch (erro) {
+        console.error("Erro ao salvar no Firestore:", erro);
+        alert('❌ Erro ao salvar no Firestore: ' + erro.message);
     }
+}
 
     // Disponibilizar funções globalmente
     window.carregarDadosFirestore = carregarDadosFirestore;
@@ -447,12 +464,19 @@ async function removerLinha(botao) {
     const tr = botao.closest('tr');
     const numero = tr.querySelector('td:first-child input').value;
 
-    if (confirm('Tem certeza que deseja excluir este processo?')) {
+    if (numero && confirm('Tem certeza que deseja excluir este processo?')) {
         try {
-            await deletarProcesso(numero);
-            tr.remove();
-            alert('Processo excluído com sucesso!');
+            const processosRef = collection(db, 'processos');
+            const q = query(processosRef, where('numero', '==', numero));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                await deleteDoc(querySnapshot.docs[0].ref);
+                tr.remove();
+                alert('Processo excluído com sucesso!');
+            }
         } catch (erro) {
+            console.error("Erro ao excluir:", erro);
             alert('Erro ao excluir processo: ' + erro.message);
         }
     }
