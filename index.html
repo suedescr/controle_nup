@@ -68,9 +68,9 @@
         // Adiciona os novos documentos
         for (const dado of dados) {
             if (dado.numero.trim() !== '') {
-                // Cria um ID seguro substituindo caracteres especiais
-                const docId = dado.numero.replace(/[./]/g, '_');
-                const docRef = doc(collection(db, 'processos'), docId);
+                // Gera um ID único para cada documento
+                const docId = dado.numero.replace(/\D/g, ''); // Remove tudo que não é número
+                const docRef = doc(processosRef, docId); // Usa a referência já criada
                 batch.set(docRef, dado);
             }
         }
