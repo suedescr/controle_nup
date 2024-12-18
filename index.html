@@ -381,7 +381,7 @@ function preencherTabela(dados) {
     
     dados.forEach(d => {
         const linha = `<tr>
-            <td><input type="text" value="${d.numero || ''}" placeholder="Número" required></td>
+            <td><input type="text" value="${d.numero || ''}" placeholder="0000.000000/0000-00" pattern="[0-9]{4}.[0-9]{6}/[0-9]{4}-[0-9]{2}" required></td>
             <td><input type="date" value="${d.data || ''}" required onchange="verificarPrazos()"></td>
             <td><input type="text" value="${d.assunto || ''}" placeholder="Assunto" required></td>
             <td><textarea placeholder="Andamento" required>${d.andamento || ''}</textarea></td>
@@ -428,7 +428,7 @@ function formatarData(data) {
 function adicionarLinha() {
     const tbody = document.querySelector('#tabelaProcessos tbody');
     const linha = `<tr>
-        <td><input type="text" placeholder="Número" required></td>
+        <td><input type="text" placeholder="0000.000000/0000-00" pattern="[0-9]{4}.[0-9]{6}/[0-9]{4}-[0-9]{2}" required></td>
         <td><input type="date" required onchange="verificarPrazos()"></td>
         <td><input type="text" placeholder="Assunto" required></td>
         <td><textarea placeholder="Andamento" required></textarea></td>
