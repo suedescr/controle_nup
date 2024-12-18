@@ -13,16 +13,7 @@
         
        <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-           import { getFirestore, 
-    collection, 
-    doc, 
-    setDoc, 
-    getDocs,
-    deleteDoc,
-    query,
-    where,
-    writeBatch
-} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs,deleteDoc,query,where,writeBatch} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
     
     // Configuração do Firebase
     const firebaseConfig = {
@@ -97,7 +88,8 @@
 
     // Carregar dados quando a página carregar
     document.addEventListener('DOMContentLoaded', carregarDadosFirestore);
-    async function deletarProcesso(numero) {
+  // Dentro do <script type="module">
+async function deletarProcesso(numero) {
     try {
         const processosRef = collection(db, 'processos');
         const q = query(processosRef, where('numero', '==', numero));
@@ -115,7 +107,7 @@
     }
 }
 
-// Torne a função global
+// Tornar a função global
 window.deletarProcesso = deletarProcesso;
 </script>
     
