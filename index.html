@@ -302,27 +302,6 @@ function verificarPrazos() {
     });
 }
 
-window.salvarArquivo = async function() {
-    try {
-        const dados = coletarDados();
-        const batch = writeBatch(db);
-
-        for (const dado of dados) {
-            const docRef = doc(collection(db, 'processos'), dado.numero || `novo_${Date.now()}`);
-            batch.set(docRef, dado);
-        }
-
-        await batch.commit();
-        alert('✅ Dados salvos no Firestore com sucesso!');
-        
-        // Recarrega os dados após salvar
-        await carregarDados();
-    } catch (erro) {
-        console.error("Erro ao salvar no Firestore:", erro);
-        alert('❌ Erro ao salvar no Firestore: ' + erro.message);
-    }
-}
-
 
 function exportarExcel() {
     try {
