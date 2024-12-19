@@ -404,6 +404,16 @@ function adicionarLinha() {
         <td><textarea placeholder="Andamento" required></textarea></td>
         <td><input type="url" placeholder="Link" onchange="atualizarLink(this)" required></td>
         <td><input type="date" required onchange="verificarPrazos()"></td>
+        <td>
+            <select class="status-processo" required>
+                <option value="">Selecione</option>
+                <option value="elaboracao">Em Elaboração</option>
+                <option value="cotacao">Aguardando Cotação</option>
+                <option value="analise">Em Análise Técnica</option>
+                <option value="licitacao">Em Licitação</option>
+                <option value="concluido">Concluído</option>
+            </select>
+        </td>
         <td><button onclick="removerLinha(this)">❌</button></td>
     </tr>`;
     tbody.insertAdjacentHTML('beforeend', linha);
