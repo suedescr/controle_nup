@@ -335,8 +335,9 @@ function coletarDados() {
         const andamento = tr.querySelector('td:nth-child(4) textarea')?.value || "";
         const link = tr.querySelector('td:nth-child(5) input')?.value || "";
         const prazo = tr.querySelector('td:nth-child(6) input')?.value || "";
+        const status = tr.querySelector('td:nth-child(7) select')?.value || ""; // Novo campo
 
-        dados.push({ numero, data, assunto, andamento, link, prazo });
+        dados.push({ numero, data, assunto, andamento, link, prazo, status });
     });
 
     return dados;
