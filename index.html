@@ -13,24 +13,23 @@
         
        <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDocs,deleteDoc,query,where,writeBatch} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-    
-    // Configuração do Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
-        authDomain: "controle-processo-nup.firebaseapp.com",
-        projectId: "controle-processo-nup",
-        storageBucket: "controle-processo-nup.appspot.com",
-        messagingSenderId: "375467007404",
-        appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
-    };
+import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-    // Inicializa o Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+// Configuração do Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
+    authDomain: "controle-processo-nup.firebaseapp.com",
+    projectId: "controle-processo-nup",
+    storageBucket: "controle-processo-nup.appspot.com",
+    messagingSenderId: "375467007404",
+    appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
+};
 
-    // Função para carregar dados
-    // Função para carregar dados
+// Inicializa o Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Função para carregar dados
 async function carregarDadosFirestore() {
     try {
         const processosRef = collection(db, 'processos');
@@ -41,37 +40,31 @@ async function carregarDadosFirestore() {
             dados.push(doc.data());
         });
         
-        // Remova a condição de length > 0
         preencherTabela(dados);
         verificarPrazos();
-        
     } catch (erro) {
         console.error("Erro ao carregar dados:", erro);
         alert('Erro ao carregar dados: ' + erro.message);
     }
 }
 
-    // Função para salvar dados
-  async function salvarDadosFirestore() {
+// Função para salvar dados
+async function salvarDadosFirestore() {
     try {
         const dados = coletarDados();
         
-        // Primeiro, exclui todos os documentos existentes
         const processosRef = collection(db, 'processos');
         const snapshot = await getDocs(processosRef);
         const batch = writeBatch(db);
         
-        // Marca todos os documentos existentes para exclusão
         snapshot.docs.forEach((doc) => {
             batch.delete(doc.ref);
         });
         
-        // Adiciona os novos documentos
         for (const dado of dados) {
             if (dado.numero.trim() !== '') {
-                // Gera um ID único para cada documento
-                const docId = dado.numero.replace(/\D/g, ''); // Remove tudo que não é número
-                const docRef = doc(processosRef, docId); // Usa a referência já criada
+                const docId = dado.numero.replace(/\D/g, '');
+                const docRef = doc(processosRef, docId);
                 batch.set(docRef, dado);
             }
         }
@@ -85,24 +78,27 @@ async function carregarDadosFirestore() {
     }
 }
 
-// Disponibilizar função globalmente
-window.salvarArquivo = salvarDadosFirestore;
-
-        await batch.commit();
-        alert('✅ Dados salvos no Firestore com sucesso!');
-        await carregarDadosFirestore();
+// Função para deletar processo
+async function deletarProcesso(numero) {
+    try {
+        const processosRef = collection(db, 'processos');
+        const docId = numero.replace(/\D/g, '');
+        const docRef = doc(processosRef, docId);
+        await deleteDoc(docRef);
+        return true;
     } catch (erro) {
-        console.error("Erro ao salvar no Firestore:", erro);
-        alert('❌ Erro ao salvar no Firestore: ' + erro.message);
+        console.error("Erro ao deletar processo:", erro);
+        throw erro;
     }
 }
 
-    // Disponibilizar funções globalmente
-    window.carregarDadosFirestore = carregarDadosFirestore;
-    window.salvarArquivo = salvarDadosFirestore;
+// Disponibilizar funções globalmente
+window.salvarArquivo = salvarDadosFirestore;
+window.carregarDadosFirestore = carregarDadosFirestore;
+window.deletarProcesso = deletarProcesso;
 
-    // Carregar dados quando a página carregar
-    document.addEventListener('DOMContentLoaded', carregarDadosFirestore);
+// Carregar dados quando a página carregar
+document.addEventListener('DOMContentLoaded', carregarDadosFirestore);
   // Dentro do <script type="module">
 async function deletarProcesso(numero) {
     try {
