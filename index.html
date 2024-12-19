@@ -30,25 +30,26 @@
     const db = getFirestore(app);
 
     // Função para carregar dados
-    async function carregarDadosFirestore() {
-        try {
-            const processosRef = collection(db, 'processos');
-            const snapshot = await getDocs(processosRef);
-            const dados = [];
-            
-            snapshot.forEach((doc) => {
-                dados.push(doc.data());
-            });
-            
-            if (dados.length > 0) {
-                preencherTabela(dados);
-                verificarPrazos();
-            }
-        } catch (erro) {
-            console.error("Erro ao carregar dados:", erro);
-            alert('Erro ao carregar dados: ' + erro.message);
-        }
+    // Função para carregar dados
+async function carregarDadosFirestore() {
+    try {
+        const processosRef = collection(db, 'processos');
+        const snapshot = await getDocs(processosRef);
+        const dados = [];
+        
+        snapshot.forEach((doc) => {
+            dados.push(doc.data());
+        });
+        
+        // Remova a condição de length > 0
+        preencherTabela(dados);
+        verificarPrazos();
+        
+    } catch (erro) {
+        console.error("Erro ao carregar dados:", erro);
+        alert('Erro ao carregar dados: ' + erro.message);
     }
+}
 
     // Função para salvar dados
   async function salvarDadosFirestore() {
