@@ -351,15 +351,26 @@ function preencherTabela(dados) {
     }
     
     dados.forEach(d => {
-        const linha = `<tr>
-            <td><input type="text" value="${d.numero || ''}" placeholder="0000.000000/0000-00" pattern="[0-9]{4}.[0-9]{6}/[0-9]{4}-[0-9]{2}" required></td>
-            <td><input type="date" value="${d.data || ''}" required onchange="verificarPrazos()"></td>
-            <td><input type="text" value="${d.assunto || ''}" placeholder="Assunto" required></td>
-            <td><textarea placeholder="Andamento" required>${d.andamento || ''}</textarea></td>
-            <td><input type="url" value="${d.link || ''}" placeholder="Link" onchange="atualizarLink(this)" required></td>
-            <td><input type="date" value="${d.prazo || ''}" required onchange="verificarPrazos()"></td>
-            <td><button onclick="removerLinha(this)" class="btn-excluir" style="background-color: #dc3545;">🗑️</button>
-            </td>`;
+       // Na função preencherTabela, atualize a const linha para incluir o status
+    const linha = `<tr>
+    <td><input type="text" value="${d.numero || ''}" placeholder="0000.000000/0000-00" pattern="[0-9]{4}.[0-9]{6}/[0-9]{4}-[0-9]{2}" required></td>
+    <td><input type="date" value="${d.data || ''}" required onchange="verificarPrazos()"></td>
+    <td><input type="text" value="${d.assunto || ''}" placeholder="Assunto" required></td>
+    <td><textarea placeholder="Andamento" required>${d.andamento || ''}</textarea></td>
+    <td><input type="url" value="${d.link || ''}" placeholder="Link" onchange="atualizarLink(this)" required></td>
+    <td><input type="date" value="${d.prazo || ''}" required onchange="verificarPrazos()"></td>
+    <td>
+        <select class="status-processo" required>
+            <option value="">Selecione</option>
+            <option value="elaboracao" ${d.status === 'elaboracao' ? 'selected' : ''}>Em Elaboração</option>
+            <option value="cotacao" ${d.status === 'cotacao' ? 'selected' : ''}>Aguardando Cotação</option>
+            <option value="analise" ${d.status === 'analise' ? 'selected' : ''}>Em Análise Técnica</option>
+            <option value="licitacao" ${d.status === 'licitacao' ? 'selected' : ''}>Em Licitação</option>
+            <option value="concluido" ${d.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+        </select>
+    </td>
+    <td><button onclick="removerLinha(this)" class="btn-excluir" style="background-color: #dc3545;">🗑️</button></td>
+`;;
         tbody.insertAdjacentHTML('beforeend', linha);
         
         if (d.link) {
