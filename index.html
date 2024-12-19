@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Processos - NUP</title>
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Controle de Processos - NUP</title>
     
         
        <script type="module">
@@ -100,19 +95,7 @@ window.deletarProcesso = deletarProcesso;
 // Carregar dados quando a página carregar
 document.addEventListener('DOMContentLoaded', carregarDadosFirestore);
   // Dentro do <script type="module">
-async function deletarProcesso(numero) {
-    try {
-        const processosRef = collection(db, 'processos');
-        // Remove tudo que não é número para criar o ID
-        const docId = numero.replace(/\D/g, '');
-        const docRef = doc(processosRef, docId);
-        await deleteDoc(docRef);
-        return true;
-    } catch (erro) {
-        console.error("Erro ao deletar processo:", erro);
-        throw erro;
-    }
-}
+
 
 // Tornar a função global
 window.deletarProcesso = deletarProcesso;
