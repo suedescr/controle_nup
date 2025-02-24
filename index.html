@@ -6,9 +6,10 @@
     <title>Controle de Processos - NUP</title>
 
     <script type="module">
-        // ✅ Importação do Firebase via CDN
+        // ✅ Importação do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // ✅ Configuração do Firebase
         const firebaseConfig = {
@@ -23,13 +24,17 @@
         // ✅ Inicializa Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+
+        // ✅ Definir parâmetros do Google para evitar erro de domínio
+        provider.setCustomParameters({ prompt: "select_account" });
 
         // ✅ Função de Login com Google
         async function loginGoogle() {
             try {
-                const result = await signInWithPopup(auth, provider);
-                console.log("Usuário autenticado:", result.user);
+                await signInWithPopup(auth, provider);
+                console.log("Usuário autenticado com Google!");
             } catch (error) {
                 alert("Erro ao autenticar com Google: " + error.message);
             }
@@ -61,13 +66,7 @@
                 await createUserWithEmailAndPassword(auth, email, senha);
                 alert("Conta criada com sucesso! Agora faça login.");
             } catch (error) {
-                if (error.code === "auth/email-already-in-use") {
-                    alert("Este e-mail já está cadastrado. Tente fazer login.");
-                } else if (error.code === "auth/invalid-email") {
-                    alert("E-mail inválido. Verifique e tente novamente.");
-                } else {
-                    alert("Erro ao criar conta: " + error.message);
-                }
+                alert("Erro ao criar conta: " + error.message);
             }
         }
 
@@ -75,7 +74,7 @@
         async function logout() {
             try {
                 await signOut(auth);
-                console.log("Usuário deslogado");
+                console.log("Usuário deslogado!");
                 window.location.reload();
             } catch (error) {
                 console.error("Erro ao sair:", error);
@@ -91,19 +90,54 @@
                 loginScreen.style.display = "none";
                 appScreen.style.display = "block";
                 document.getElementById("status").innerText = `Logado como: ${user.email || user.displayName}`;
+
+                // ✅ Carrega os dados ao entrar
+                carregarDadosFirestore();
             } else {
                 loginScreen.style.display = "block";
                 appScreen.style.display = "none";
             }
         });
 
-        // ✅ Captura erros para evitar tela branca
-        window.onerror = function (msg, url, lineNo, columnNo, error) {
-            alert("Erro detectado: " + msg + "\nLinha: " + lineNo);
-            return true;
-        };
+        // ✅ Função para carregar os processos do Firestore
+        async function carregarDadosFirestore() {
+            try {
+                const processosRef = collection(db, 'processos');
+                const snapshot = await getDocs(processosRef);
+                const dados = snapshot.docs.map(doc => doc.data());
 
-        // Disponibilizar funções globalmente
+                console.log("Dados carregados:", dados);
+
+                if (dados.length === 0) {
+                    alert("Nenhum processo encontrado.");
+                } else {
+                    preencherTabela(dados);
+                }
+            } catch (erro) {
+                console.error("Erro ao carregar processos:", erro);
+                alert("Erro ao carregar processos: " + erro.message);
+            }
+        }
+
+        // ✅ Função para preencher a tabela
+        function preencherTabela(dados) {
+            const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
+            tabela.innerHTML = "";
+
+            dados.forEach(d => {
+                const linha = `<tr>
+                    <td>${d.numero || 'N/A'}</td>
+                    <td>${d.data || 'N/A'}</td>
+                    <td>${d.assunto || 'N/A'}</td>
+                    <td>${d.andamento || 'N/A'}</td>
+                    <td><a href="${d.link}" target="_blank">Abrir</a></td>
+                    <td>${d.prazo || 'N/A'}</td>
+                </tr>`;
+                tabela.insertAdjacentHTML('beforeend', linha);
+            });
+        }
+
+        // ✅ Disponibilizar funções globalmente
         window.loginGoogle = loginGoogle;
         window.loginEmailSenha = loginEmailSenha;
         window.registrar = registrar;
@@ -114,6 +148,9 @@
         body { font-family: Arial, sans-serif; text-align: center; }
         button { padding: 10px; margin: 5px; cursor: pointer; background: #4CAF50; color: white; border: none; }
         input { padding: 8px; margin: 5px; width: 250px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 8px; }
+        th { background-color: #4CAF50; color: white; }
     </style>
 </head>
 <body>
@@ -134,6 +171,19 @@
         <h1>Controle de Processos - NUP</h1>
         <div id="status"></div>
         <button onclick="logout()">🚪 Sair</button>
+        <table id="tabelaProcessos">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Data Entrada</th>
+                    <th>Assunto</th>
+                    <th>Andamento</th>
+                    <th>Link</th>
+                    <th>Prazo</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
 </body>
