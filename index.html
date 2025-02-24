@@ -4,22 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Processos - NUP</title>
-    
+
     <script type="module">
-        // Importação via CDN para funcionar no GitHub Pages
+        // Importação via CDN para rodar no GitHub Pages
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
+            apiKey: "SUA_API_KEY_CORRETA",
             authDomain: "controle-processo-nup.firebaseapp.com",
             projectId: "controle-processo-nup",
             storageBucket: "controle-processo-nup.appspot.com",
             messagingSenderId: "375467007404",
-            appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09",
-            measurementId: "G-KPKEEKG75W"
+            appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
         };
 
         // Inicializa Firebase
@@ -27,6 +26,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+
+        // Define Client ID para evitar erro de "Unauthorized domain"
+        provider.setCustomParameters({
+            client_id: "375467007404-f89c13rct7unu3sahqqsuebcnah96f2e.apps.googleusercontent.com",
+            prompt: "select_account"
+        });
 
         // Função de Login com Google
         async function login() {
@@ -44,6 +49,7 @@
             try {
                 await signOut(auth);
                 console.log("Usuário deslogado");
+                window.location.reload(); // Atualiza a página ao sair
             } catch (error) {
                 console.error("Erro ao sair:", error);
             }
@@ -56,7 +62,7 @@
                 alert("Você precisa estar autenticado para acessar os processos.");
                 return;
             }
-            
+
             try {
                 const processosRef = collection(db, 'processos');
                 const snapshot = await getDocs(processosRef);
@@ -92,7 +98,7 @@
         function preencherTabela(dados) {
             const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
             tabela.innerHTML = ""; // Limpa tabela antes de adicionar novos dados
-            
+
             dados.forEach(d => {
                 const linha = `<tr>
                     <td>${d.numero || 'N/A'}</td>
@@ -117,17 +123,33 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 80%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
         }
         button {
             padding: 10px;
             font-size: 16px;
             margin: 10px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background: #45a049;
         }
         table {
-            width: 80%;
-            margin: 20px auto;
+            width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
         }
         th, td {
             border: 1px solid black;
@@ -141,30 +163,29 @@
 </head>
 <body>
 
-    <h1>Controle de Processos - NUP</h1>
+    <div class="container">
+        <h1>Controle de Processos - NUP</h1>
+        <div id="status">Não autenticado</div>
 
-    <div id="status">Não autenticado</div>
-    
-    <button id="loginBtn" onclick="login()">🔑 Login com Google</button>
-    <button id="logoutBtn" onclick="logout()" style="display: none;">🚪 Sair</button>
+        <button id="loginBtn" onclick="login()">🔑 Login com Google</button>
+        <button id="logoutBtn" onclick="logout()" style="display: none;">🚪 Sair</button>
 
-    <button onclick="carregarDadosFirestore()">🔄 Recarregar Processos</button>
+        <button onclick="carregarDadosFirestore()">🔄 Recarregar Processos</button>
 
-    <table id="tabelaProcessos">
-        <thead>
-            <tr>
-                <th>Número</th>
-                <th>Data Entrada</th>
-                <th>Assunto</th>
-                <th>Andamento</th>
-                <th>Link</th>
-                <th>Prazo</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+        <table id="tabelaProcessos">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Data Entrada</th>
+                    <th>Assunto</th>
+                    <th>Andamento</th>
+                    <th>Link</th>
+                    <th>Prazo</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
 </body>
 </html>
-
-
