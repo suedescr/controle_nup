@@ -4,486 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Processos - NUP</title>
-    
     <script type="module">
-        // seu código Firebase aqui
-    </script>
-    
-    <style>
-        // seu CSS aqui
-    </style>
-</head>
-        
-       <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-// Configuração do Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyBHDwatGIcMmFXmbdw_kH4dQW-xtZJgcA",
-    authDomain: "controle-processo-nup.firebaseapp.com",
-    projectId: "controle-processo-nup",
-    storageBucket: "controle-processo-nup.appspot.com",
-    messagingSenderId: "375467007404",
-    appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
-};
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "SEU_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
 
-// Inicializa o Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+        // Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-// Função para carregar dados
-async function carregarDadosFirestore() {
-    try {
-        const processosRef = collection(db, 'processos');
-        const snapshot = await getDocs(processosRef);
-        const dados = [];
-        
-        snapshot.forEach((doc) => {
-            dados.push(doc.data());
-        });
-        
-        preencherTabela(dados);
-        verificarPrazos();
-    } catch (erro) {
-        console.error("Erro ao carregar dados:", erro);
-        alert('Erro ao carregar dados: ' + erro.message);
-    }
-}
-
-// Função para salvar dados
-async function salvarDadosFirestore() {
-    try {
-        const dados = coletarDados();
-        
-        const processosRef = collection(db, 'processos');
-        const snapshot = await getDocs(processosRef);
-        const batch = writeBatch(db);
-        
-        snapshot.docs.forEach((doc) => {
-            batch.delete(doc.ref);
-        });
-        
-        for (const dado of dados) {
-            if (dado.numero.trim() !== '') {
-                const docId = dado.numero.replace(/\D/g, '');
-                const docRef = doc(processosRef, docId);
-                batch.set(docRef, dado);
+        // Função para autenticação com Google
+        async function login() {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                console.log("Usuário autenticado:", result.user);
+            } catch (error) {
+                console.error("Erro ao autenticar:", error);
+                alert("Erro ao autenticar: " + error.message);
             }
         }
 
-        await batch.commit();
-        alert('✅ Dados salvos no Firestore com sucesso!');
-        location.reload();
-    } catch (erro) {
-        console.error("Erro ao salvar no Firestore:", erro);
-        alert('❌ Erro ao salvar no Firestore: ' + erro.message);
-    }
-}
+        // Função para logout
+        async function logout() {
+            try {
+                await signOut(auth);
+                console.log("Usuário desconectado");
+            } catch (error) {
+                console.error("Erro ao sair:", error);
+            }
+        }
 
-// Função para deletar processo
-async function deletarProcesso(numero) {
-    try {
-        const processosRef = collection(db, 'processos');
-        const docId = numero.replace(/\D/g, '');
-        const docRef = doc(processosRef, docId);
-        await deleteDoc(docRef);
-        return true;
-    } catch (erro) {
-        console.error("Erro ao deletar processo:", erro);
-        throw erro;
-    }
-}
+        // Função para carregar os processos do Firestore
+        async function carregarDadosFirestore() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Você precisa estar autenticado para acessar os processos.");
+                return;
+            }
+            
+            try {
+                const processosRef = collection(db, 'processos');
+                const snapshot = await getDocs(processosRef);
+                const dados = snapshot.docs.map(doc => doc.data());
 
-// Disponibilizar funções globalmente
-window.salvarArquivo = salvarDadosFirestore;
-window.carregarDadosFirestore = carregarDadosFirestore;
-window.deletarProcesso = deletarProcesso;
+                console.log("Dados carregados:", dados);
+                preencherTabela(dados);
+            } catch (erro) {
+                console.error("Erro ao carregar dados:", erro);
+                alert("Erro ao carregar dados: " + erro.message);
+            }
+        }
 
-// Carregar dados quando a página carregar
-document.addEventListener('DOMContentLoaded', carregarDadosFirestore);
-  // Dentro do <script type="module">
+        // Monitora a autenticação do usuário
+        onAuthStateChanged(auth, (user) => {
+            const loginBtn = document.getElementById("loginBtn");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const statusDiv = document.getElementById("status");
 
+            if (user) {
+                statusDiv.innerHTML = `Logado como: ${user.displayName}`;
+                loginBtn.style.display = "none";
+                logoutBtn.style.display = "block";
+                carregarDadosFirestore();
+            } else {
+                statusDiv.innerHTML = "Não autenticado";
+                loginBtn.style.display = "block";
+                logoutBtn.style.display = "none";
+            }
+        });
 
-// Tornar a função global
-window.deletarProcesso = deletarProcesso;
-</script>
-    
-        <!-- Resto do seu código CSS aqui -->
-        <style>
-            /* Seu CSS atual */
-        </style>
-    </head>
-    
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Processos - NUP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-        header h1 {
-            color: #333;
-            font-size: 24px;
-            margin: 0 0 20px;
-            border-bottom: 2px solid #4CAF50;
-            padding-bottom: 10px;
-        }
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        input, select, textarea, button {
-            padding: 8px;
-            font-size: 14px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            box-sizing: border-box;
-        }
-        textarea {
-            min-height: 60px;
-            width: 100%;
-            resize: vertical;
-        }
-        button {
-            background: #4CAF50;
-            color: white;
-            cursor: pointer;
-            border: none;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background: #4CAF50;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        td input[type="text"], td input[type="date"], td input[type="url"] {
-            width: 100%;
-        }
-        .prazo-proximo { background-color: #fff3e0 !important; }
-        .prazo-vencido { background-color: #ffebee !important; }
-        a {
-            color: #4CAF50;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+        // Disponibilizar funções no escopo global
+        window.login = login;
+        window.logout = logout;
+        window.carregarDadosFirestore = carregarDadosFirestore;
+    </script>
 </head>
 <body>
-<div class="container">
-    <header><h1>Controle de Processos - NUP</h1></header>
-    <div class="controls">
-        <input type="text" id="filtro" placeholder="Filtrar processos..." oninput="filtrarTabela()">
-        <select id="ordem" onchange="ordenarTabela()">
-            <option value="prazo_asc">Prazo (mais próximo)</option>
-            <option value="prazo_desc">Prazo (mais distante)</option>
-            <option value="data_asc">Data Entrada (antigos)</option>
-            <option value="data_desc">Data Entrada (recentes)</option>
-        </select>
-        <button onclick="salvarArquivo()">💾 Salvar</button>
-        <button onclick="document.getElementById('fileInput').click()">📂 Carregar</button>
-        <input type="file" id="fileInput" accept=".json" onchange="carregarDeArquivo(this.files[0])" hidden>
-        <button onclick="exportarExcel()">📊 Exportar</button>
+    <div class="container">
+        <header>
+            <h1>Controle de Processos - NUP</h1>
+            <div id="status">Não autenticado</div>
+            <button id="loginBtn" onclick="login()">🔑 Login com Google</button>
+            <button id="logoutBtn" onclick="logout()" style="display: none;">🚪 Sair</button>
+        </header>
+        <button onclick="carregarDadosFirestore()">🔄 Recarregar Processos</button>
     </div>
-
-    <div class="table-container">
-        <table id="tabelaProcessos">
-            <thead>
-    <tr>
-        <th>Número</th>
-        <th>Data Entrada</th>
-        <th>Assunto</th>
-        <th>Andamento</th>
-        <th>Link</th>
-        <th>Prazo</th>
-        <th>Status</th>  <!-- Nova coluna -->
-        <th>Ações</th>
-    </tr>
-</thead>
-            <tbody></tbody>
-        </table>
-    </div>
-    <button onclick="adicionarLinha()" style="margin-top: 15px">+ Adicionar Processo</button>
-</div>
-
-<script>
-function filtrarTabela() {
-    const filtro = document.getElementById('filtro').value.toLowerCase();
-    document.querySelectorAll('#tabelaProcessos tbody tr').forEach(tr => {
-        const texto = Array.from(tr.querySelectorAll('input, textarea'))
-            .map(el => el.value)
-            .join(' ')
-            .toLowerCase();
-        tr.style.display = texto.includes(filtro) ? '' : 'none';
-    });
-}
-
-function ordenarTabela() {
-    const tbody = document.querySelector('#tabelaProcessos tbody');
-    const linhas = Array.from(tbody.children);
-    const ordem = document.getElementById('ordem').value;
-    
-    linhas.sort((a, b) => {
-        let dateA, dateB;
-        if (ordem.startsWith('prazo')) {
-            dateA = a.querySelector('td:nth-child(6) input').value;
-            dateB = b.querySelector('td:nth-child(6) input').value;
-        } else {
-            dateA = a.querySelector('td:nth-child(2) input').value;
-            dateB = b.querySelector('td:nth-child(2) input').value;
-        }
-
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-        
-        const comparison = ordem.endsWith('asc') ? 
-            new Date(dateA) - new Date(dateB) : 
-            new Date(dateB) - new Date(dateA);
-        
-        return comparison;
-    });
-
-    linhas.forEach(linha => tbody.appendChild(linha));
-}
-
-function verificarPrazos() {
-    const hoje = new Date();
-    document.querySelectorAll('#tabelaProcessos tbody tr').forEach(tr => {
-        const prazoInput = tr.querySelector('td:nth-child(6) input');
-        if (prazoInput.value) {
-            const prazo = new Date(prazoInput.value);
-            const dias = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
-            tr.className = '';
-            if (dias < 0) {
-                tr.className = 'prazo-vencido';
-            } else if (dias <= 7) {
-                tr.className = 'prazo-proximo';
-            }
-        }
-    });
-}
-
-
-function exportarExcel() {
-    try {
-        const dados = coletarDados();
-        const csv = gerarCSV(dados);
-        const hoje = new Date().toLocaleDateString().replace(/\//g, '-');
-        baixarArquivo(csv, `processos-${hoje}.csv`, 'text/csv;charset=utf-8;');
-        alert('✅ Planilha exportada com sucesso!');
-    } catch (erro) {
-        alert('❌ Erro ao exportar: ' + erro.message);
-    }
-}
-
-function carregarDeArquivo(arquivo) {
-    if (!arquivo) return;
-    
-    const leitor = new FileReader();
-    leitor.onload = function(e) {
-        try {
-            const dados = JSON.parse(e.target.result);
-            preencherTabela(dados);
-            verificarPrazos();
-            alert('✅ Dados carregados com sucesso!');
-        } catch (erro) {
-            alert('❌ Erro ao carregar arquivo: ' + erro.message);
-        }
-    };
-    leitor.readAsText(arquivo);
-}
-
-function coletarDados() {
-    const linhas = document.querySelectorAll('#tabelaProcessos tbody tr');
-    const dados = [];
-
-    linhas.forEach(tr => {
-        const numero = tr.querySelector('td:nth-child(1) input')?.value || "";
-        const data = tr.querySelector('td:nth-child(2) input')?.value || "";
-        const assunto = tr.querySelector('td:nth-child(3) input')?.value || "";
-        const andamento = tr.querySelector('td:nth-child(4) textarea')?.value || "";
-        const link = tr.querySelector('td:nth-child(5) input')?.value || "";
-        const prazo = tr.querySelector('td:nth-child(6) input')?.value || "";
-        const status = tr.querySelector('td:nth-child(7) select')?.value || ""; // Novo campo
-
-        dados.push({ numero, data, assunto, andamento, link, prazo, status });
-    });
-
-    return dados;
-}
-
-function preencherTabela(dados) {
-    const tbody = document.querySelector('#tabelaProcessos tbody');
-    // Limpa apenas se for o carregamento inicial
-    if (tbody.children.length <= 1) {
-        tbody.innerHTML = '';
-    }
-    
-    dados.forEach(d => {
-       // Na função preencherTabela, atualize a const linha para incluir o status
-    const linha = `<tr>
-    <td><input type="text" value="${d.numero || ''}" placeholder="0000.000000/0000-00" pattern="[0-9]{4}.[0-9]{6}/[0-9]{4}-[0-9]{2}" required></td>
-    <td><input type="date" value="${d.data || ''}" required onchange="verificarPrazos()"></td>
-    <td><input type="text" value="${d.assunto || ''}" placeholder="Assunto" required></td>
-    <td><textarea placeholder="Andamento" required>${d.andamento || ''}</textarea></td>
-    <td><input type="url" value="${d.link || ''}" placeholder="Link" onchange="atualizarLink(this)" required></td>
-    <td><input type="date" value="${d.prazo || ''}" required onchange="verificarPrazos()"></td>
-    <td>
-        <select class="status-processo" required>
-            <option value="">Selecione</option>
-            <option value="elaboracao" ${d.status === 'elaboracao' ? 'selected' : ''}>Em Elaboração</option>
-            <option value="cotacao" ${d.status === 'cotacao' ? 'selected' : ''}>Aguardando Cotação</option>
-            <option value="analise" ${d.status === 'analise' ? 'selected' : ''}>Em Análise Técnica</option>
-            <option value="licitacao" ${d.status === 'licitacao' ? 'selected' : ''}>Em Licitação</option>
-            <option value="concluido" ${d.status === 'concluido' ? 'selected' : ''}>Concluído</option>
-        </select>
-    </td>
-    <td><button onclick="removerLinha(this)" class="btn-excluir" style="background-color: #dc3545;">🗑️</button></td>
-`;;
-        tbody.insertAdjacentHTML('beforeend', linha);
-        
-        if (d.link) {
-            const ultimaLinha = tbody.lastElementChild;
-            const input = ultimaLinha.querySelector('td:nth-child(5) input');
-            atualizarLink(input);
-        }
-    });
-}
-
-
-function gerarCSV(dados) {
-    const BOM = '\uFEFF';
-    const linhas = [
-        ['Numero', 'Data Entrada', 'Assunto', 'Andamento', 'Link', 'Prazo'],
-        ...dados.map(d => [
-            d.numero,
-            formatarData(d.data),
-            d.assunto,
-            d.andamento,
-            d.link,
-            formatarData(d.prazo)
-        ])
-    ];
-    return BOM + linhas.map(row => 
-        row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`)
-        .join(';')
-    ).join('\n');
-}
-
-function formatarData(data) {
-    if (!data) return '';
-    const [ano, mes, dia] = data.split('-');
-    return `${dia}/${mes}/${ano}`;
-}
-
-function adicionarLinha() {
-    const tbody = document.querySelector('#tabelaProcessos tbody');
-    const linha = `<tr>
-        <td><input type="text" placeholder="0000.000000/0000-00" pattern="[0-9]{4}.[0-9]{6}/[0-9]{4}-[0-9]{2}" required></td>
-        <td><input type="date" required onchange="verificarPrazos()"></td>
-        <td><input type="text" placeholder="Assunto" required></td>
-        <td><textarea placeholder="Andamento" required></textarea></td>
-        <td><input type="url" placeholder="Link" onchange="atualizarLink(this)" required></td>
-        <td><input type="date" required onchange="verificarPrazos()"></td>
-        <td>
-            <select class="status-processo" required>
-                <option value="">Selecione</option>
-                <option value="elaboracao">Em Elaboração</option>
-                <option value="cotacao">Aguardando Cotação</option>
-                <option value="analise">Em Análise Técnica</option>
-                <option value="licitacao">Em Licitação</option>
-                <option value="concluido">Concluído</option>
-            </select>
-        </td>
-        <td><button onclick="removerLinha(this)">❌</button></td>
-    </tr>`;
-    tbody.insertAdjacentHTML('beforeend', linha);
-}
-
-function atualizarLink(input) {
-    const valor = input.value;
-    const td = input.parentElement;
-    
-    // Remove o botão anterior se existir
-    const botaoAntigo = td.querySelector('button');
-    if (botaoAntigo) {
-        botaoAntigo.remove();
-    }
-    
-    // Se tiver um valor, adiciona o botão de abrir link
-    if (valor) {
-        const botaoAbrir = document.createElement('button');
-        botaoAbrir.innerHTML = '🔗';
-        botaoAbrir.title = 'Abrir link';
-        botaoAbrir.style.marginLeft = '5px';
-        botaoAbrir.onclick = () => window.open(valor, '_blank');
-        td.appendChild(botaoAbrir);
-    }
-}
-
-async function removerLinha(botao) {
-    const tr = botao.closest('tr');
-    const numero = tr.querySelector('td:first-child input').value;
-
-    if (numero && confirm('Tem certeza que deseja excluir este processo?')) {
-        try {
-            // Chamando a função global de deletar
-            await window.deletarProcesso(numero);
-            tr.remove();
-            alert('Processo excluído com sucesso!');
-        } catch (erro) {
-            console.error("Erro ao excluir:", erro);
-            alert('Erro ao excluir processo: ' + erro.message);
-        }
-    }
-}
-function baixarArquivo(conteudo, nomeArquivo, tipo) {
-    const blob = new Blob([conteudo], { type: tipo });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = nomeArquivo;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-}
-
-// Inicialização
-window.onload = function() {
-    adicionarLinha();
-    verificarPrazos();
-};
-</script>
 </body>
 </html>
+
