@@ -9,7 +9,6 @@
         // Importação via CDN para rodar no GitHub Pages
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // ✅ Configuração do Firebase
         const firebaseConfig = {
@@ -24,7 +23,6 @@
         // Inicializa Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
         // ✅ Define Client ID para evitar erro de "Unauthorized domain"
@@ -87,7 +85,6 @@
                 loginScreen.style.display = "none";
                 appScreen.style.display = "block";
                 document.getElementById("status").innerText = `Logado como: ${user.email || user.displayName}`;
-                carregarDadosFirestore();
             } else {
                 loginScreen.style.display = "block";
                 appScreen.style.display = "none";
@@ -104,9 +101,6 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         button { padding: 10px; margin: 5px; cursor: pointer; background: #4CAF50; color: white; border: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid black; padding: 8px; }
-        th { background-color: #4CAF50; color: white; }
         input { padding: 8px; margin: 5px; width: 250px; }
     </style>
 </head>
@@ -115,4 +109,20 @@
     <!-- ✅ Tela de Login -->
     <div id="loginScreen">
         <h2>Faça login para acessar o sistema</h2>
-        <input type="email" 
+        <input type="email" id="email" placeholder="Digite seu e-mail">
+        <input type="password" id="senha" placeholder="Digite sua senha">
+        <button onclick="loginEmailSenha()">🔑 Login</button>
+        <button onclick="registrar()">📝 Criar Conta</button>
+        <hr>
+        <button onclick="loginGoogle()">🔵 Login com Google</button>
+    </div>
+
+    <!-- ✅ Tela do Aplicativo -->
+    <div id="appScreen" style="display: none;">
+        <h1>Controle de Processos - NUP</h1>
+        <div id="status"></div>
+        <button onclick="logout()">🚪 Sair</button>
+    </div>
+
+</body>
+</html>
