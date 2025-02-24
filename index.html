@@ -4,19 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Processos - NUP</title>
+    
     <script type="module">
+        // Importação via CDN para funcionar no GitHub Pages
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
-            apiKey: "SEU_API_KEY",
-            authDomain: "SEU_AUTH_DOMAIN",
-            projectId: "SEU_PROJECT_ID",
-            storageBucket: "SEU_STORAGE_BUCKET",
-            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-            appId: "SEU_APP_ID"
+            apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
+            authDomain: "controle-processo-nup.firebaseapp.com",
+            projectId: "controle-processo-nup",
+            storageBucket: "controle-processo-nup.appspot.com",
+            messagingSenderId: "375467007404",
+            appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09",
+            measurementId: "G-KPKEEKG75W"
         };
 
         // Inicializa Firebase
@@ -25,7 +28,7 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // Função para autenticação com Google
+        // Função de Login com Google
         async function login() {
             try {
                 const result = await signInWithPopup(auth, provider);
@@ -36,17 +39,17 @@
             }
         }
 
-        // Função para logout
+        // Função de Logout
         async function logout() {
             try {
                 await signOut(auth);
-                console.log("Usuário desconectado");
+                console.log("Usuário deslogado");
             } catch (error) {
                 console.error("Erro ao sair:", error);
             }
         }
 
-        // Função para carregar os processos do Firestore
+        // Função para carregar processos do Firestore
         async function carregarDadosFirestore() {
             const user = auth.currentUser;
             if (!user) {
@@ -67,7 +70,7 @@
             }
         }
 
-        // Monitora a autenticação do usuário
+        // Atualiza interface ao mudar estado de autenticação
         onAuthStateChanged(auth, (user) => {
             const loginBtn = document.getElementById("loginBtn");
             const logoutBtn = document.getElementById("logoutBtn");
@@ -85,22 +88,83 @@
             }
         });
 
-        // Disponibilizar funções no escopo global
+        // Função para preencher a tabela com os dados do Firestore
+        function preencherTabela(dados) {
+            const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
+            tabela.innerHTML = ""; // Limpa tabela antes de adicionar novos dados
+            
+            dados.forEach(d => {
+                const linha = `<tr>
+                    <td>${d.numero || 'N/A'}</td>
+                    <td>${d.data || 'N/A'}</td>
+                    <td>${d.assunto || 'N/A'}</td>
+                    <td>${d.andamento || 'N/A'}</td>
+                    <td><a href="${d.link}" target="_blank">Abrir</a></td>
+                    <td>${d.prazo || 'N/A'}</td>
+                </tr>`;
+                tabela.insertAdjacentHTML('beforeend', linha);
+            });
+        }
+
+        // Disponibilizar funções globalmente
         window.login = login;
         window.logout = logout;
         window.carregarDadosFirestore = carregarDadosFirestore;
     </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Controle de Processos - NUP</h1>
-            <div id="status">Não autenticado</div>
-            <button id="loginBtn" onclick="login()">🔑 Login com Google</button>
-            <button id="logoutBtn" onclick="logout()" style="display: none;">🚪 Sair</button>
-        </header>
-        <button onclick="carregarDadosFirestore()">🔄 Recarregar Processos</button>
-    </div>
+
+    <h1>Controle de Processos - NUP</h1>
+
+    <div id="status">Não autenticado</div>
+    
+    <button id="loginBtn" onclick="login()">🔑 Login com Google</button>
+    <button id="logoutBtn" onclick="logout()" style="display: none;">🚪 Sair</button>
+
+    <button onclick="carregarDadosFirestore()">🔄 Recarregar Processos</button>
+
+    <table id="tabelaProcessos">
+        <thead>
+            <tr>
+                <th>Número</th>
+                <th>Data Entrada</th>
+                <th>Assunto</th>
+                <th>Andamento</th>
+                <th>Link</th>
+                <th>Prazo</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
 </body>
 </html>
+
 
