@@ -11,9 +11,9 @@
         import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-        // Configuração do Firebase
+        // ✅ Configuração do Firebase (API Key correta e authDomain corrigido)
         const firebaseConfig = {
-            apiKey: "SUA_API_KEY_CORRETA",
+            apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
             authDomain: "controle-processo-nup.firebaseapp.com",
             projectId: "controle-processo-nup",
             storageBucket: "controle-processo-nup.appspot.com",
@@ -27,13 +27,13 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // Define Client ID para evitar erro de "Unauthorized domain"
+        // ✅ Define Client ID para evitar erro de "Unauthorized domain"
         provider.setCustomParameters({
             client_id: "375467007404-f89c13rct7unu3sahqqsuebcnah96f2e.apps.googleusercontent.com",
             prompt: "select_account"
         });
 
-        // Função de Login com Google
+        // ✅ Função de Login com Google
         async function login() {
             try {
                 const result = await signInWithPopup(auth, provider);
@@ -44,7 +44,7 @@
             }
         }
 
-        // Função de Logout
+        // ✅ Função de Logout
         async function logout() {
             try {
                 await signOut(auth);
@@ -55,7 +55,7 @@
             }
         }
 
-        // Função para carregar processos do Firestore
+        // ✅ Função para carregar processos do Firestore (apenas se o usuário estiver autenticado)
         async function carregarDadosFirestore() {
             const user = auth.currentUser;
             if (!user) {
@@ -76,7 +76,7 @@
             }
         }
 
-        // Atualiza interface ao mudar estado de autenticação
+        // ✅ Atualiza interface ao mudar estado de autenticação
         onAuthStateChanged(auth, (user) => {
             const loginBtn = document.getElementById("loginBtn");
             const logoutBtn = document.getElementById("logoutBtn");
@@ -94,7 +94,7 @@
             }
         });
 
-        // Função para preencher a tabela com os dados do Firestore
+        // ✅ Função para preencher a tabela com os dados do Firestore
         function preencherTabela(dados) {
             const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
             tabela.innerHTML = ""; // Limpa tabela antes de adicionar novos dados
