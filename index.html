@@ -1,89 +1,140 @@
-<script type="module">
-    // Importação via CDN para rodar no GitHub Pages
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-    import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Processos - NUP</title>
 
-    // ✅ Configuração do Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
-        authDomain: "controle-processo-nup.firebaseapp.com",
-        projectId: "controle-processo-nup",
-        storageBucket: "controle-processo-nup.appspot.com",
-        messagingSenderId: "375467007404",
-        appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
-    };
+    <script type="module">
+        // ✅ Importação do Firebase via CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
-    // Inicializa Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+        // ✅ Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
+            authDomain: "controle-processo-nup.firebaseapp.com",
+            projectId: "controle-processo-nup",
+            storageBucket: "controle-processo-nup.appspot.com",
+            messagingSenderId: "375467007404",
+            appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
+        };
 
-    // ✅ Função de Login com E-mail e Senha
-    async function loginEmailSenha() {
-        const email = document.getElementById("email").value;
-        const senha = document.getElementById("senha").value;
-        try {
-            await signInWithEmailAndPassword(auth, email, senha);
-            console.log("Usuário autenticado com e-mail e senha!");
-        } catch (error) {
-            alert("Erro ao autenticar: " + error.message);
-        }
-    }
+        // ✅ Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
 
-    // ✅ Função para Criar Conta com E-mail e Senha (Corrigida)
-    async function registrar() {
-        const email = document.getElementById("email").value;
-        const senha = document.getElementById("senha").value;
-
-        // 🛑 Verifica se a senha tem pelo menos 6 caracteres
-        if (senha.length < 6) {
-            alert("A senha deve ter pelo menos 6 caracteres.");
-            return;
-        }
-
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
-            alert("Conta criada com sucesso! Agora faça login.");
-        } catch (error) {
-            // 🛑 Tratamento de erros do Firebase
-            if (error.code === "auth/email-already-in-use") {
-                alert("Este e-mail já está cadastrado. Tente fazer login.");
-            } else if (error.code === "auth/invalid-email") {
-                alert("E-mail inválido. Verifique e tente novamente.");
-            } else {
-                alert("Erro ao criar conta: " + error.message);
+        // ✅ Função de Login com Google
+        async function loginGoogle() {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                console.log("Usuário autenticado:", result.user);
+            } catch (error) {
+                alert("Erro ao autenticar com Google: " + error.message);
             }
         }
-    }
 
-    // ✅ Função de Logout
-    async function logout() {
-        try {
-            await signOut(auth);
-            console.log("Usuário deslogado");
-            window.location.reload();
-        } catch (error) {
-            console.error("Erro ao sair:", error);
+        // ✅ Função de Login com E-mail e Senha
+        async function loginEmailSenha() {
+            const email = document.getElementById("email").value;
+            const senha = document.getElementById("senha").value;
+            try {
+                await signInWithEmailAndPassword(auth, email, senha);
+                console.log("Usuário autenticado com e-mail e senha!");
+            } catch (error) {
+                alert("Erro ao autenticar: " + error.message);
+            }
         }
-    }
 
-    // ✅ Atualiza interface ao mudar estado de autenticação
-    onAuthStateChanged(auth, (user) => {
-        const loginScreen = document.getElementById("loginScreen");
-        const appScreen = document.getElementById("appScreen");
+        // ✅ Função para Criar Conta com E-mail e Senha
+        async function registrar() {
+            const email = document.getElementById("email").value;
+            const senha = document.getElementById("senha").value;
 
-        if (user) {
-            loginScreen.style.display = "none";
-            appScreen.style.display = "block";
-            document.getElementById("status").innerText = `Logado como: ${user.email || user.displayName}`;
-        } else {
-            loginScreen.style.display = "block";
-            appScreen.style.display = "none";
+            if (senha.length < 6) {
+                alert("A senha deve ter pelo menos 6 caracteres.");
+                return;
+            }
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, senha);
+                alert("Conta criada com sucesso! Agora faça login.");
+            } catch (error) {
+                if (error.code === "auth/email-already-in-use") {
+                    alert("Este e-mail já está cadastrado. Tente fazer login.");
+                } else if (error.code === "auth/invalid-email") {
+                    alert("E-mail inválido. Verifique e tente novamente.");
+                } else {
+                    alert("Erro ao criar conta: " + error.message);
+                }
+            }
         }
-    });
 
-    // Disponibilizar funções globalmente
-    window.loginEmailSenha = loginEmailSenha;
-    window.registrar = registrar;
-    window.logout = logout;
-</script>
+        // ✅ Função de Logout
+        async function logout() {
+            try {
+                await signOut(auth);
+                console.log("Usuário deslogado");
+                window.location.reload();
+            } catch (error) {
+                console.error("Erro ao sair:", error);
+            }
+        }
+
+        // ✅ Atualiza interface ao mudar estado de autenticação
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById("loginScreen");
+            const appScreen = document.getElementById("appScreen");
+
+            if (user) {
+                loginScreen.style.display = "none";
+                appScreen.style.display = "block";
+                document.getElementById("status").innerText = `Logado como: ${user.email || user.displayName}`;
+            } else {
+                loginScreen.style.display = "block";
+                appScreen.style.display = "none";
+            }
+        });
+
+        // ✅ Captura erros para evitar tela branca
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            alert("Erro detectado: " + msg + "\nLinha: " + lineNo);
+            return true;
+        };
+
+        // Disponibilizar funções globalmente
+        window.loginGoogle = loginGoogle;
+        window.loginEmailSenha = loginEmailSenha;
+        window.registrar = registrar;
+        window.logout = logout;
+    </script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        button { padding: 10px; margin: 5px; cursor: pointer; background: #4CAF50; color: white; border: none; }
+        input { padding: 8px; margin: 5px; width: 250px; }
+    </style>
+</head>
+<body>
+
+    <!-- ✅ Tela de Login -->
+    <div id="loginScreen">
+        <h2>Faça login para acessar o sistema</h2>
+        <input type="email" id="email" placeholder="Digite seu e-mail">
+        <input type="password" id="senha" placeholder="Digite sua senha">
+        <button onclick="loginEmailSenha()">🔑 Login</button>
+        <button onclick="registrar()">📝 Criar Conta</button>
+        <hr>
+        <button onclick="loginGoogle()">🔵 Login com Google</button>
+    </div>
+
+    <!-- ✅ Tela do Aplicativo -->
+    <div id="appScreen" style="display: none;">
+        <h1>Controle de Processos - NUP</h1>
+        <div id="status"></div>
+        <button onclick="logout()">🚪 Sair</button>
+    </div>
+
+</body>
+</html>
