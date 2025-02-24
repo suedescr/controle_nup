@@ -8,7 +8,7 @@
     <script type="module">
         // Importação via CDN para rodar no GitHub Pages
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getFirestore, collection, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // ✅ Configuração do Firebase
@@ -34,13 +34,36 @@
         });
 
         // ✅ Função de Login com Google
-        async function login() {
+        async function loginGoogle() {
             try {
                 const result = await signInWithPopup(auth, provider);
                 console.log("Usuário autenticado:", result.user);
             } catch (error) {
-                console.error("Erro ao autenticar:", error);
+                alert("Erro ao autenticar com Google: " + error.message);
+            }
+        }
+
+        // ✅ Função de Login com E-mail e Senha
+        async function loginEmailSenha() {
+            const email = document.getElementById("email").value;
+            const senha = document.getElementById("senha").value;
+            try {
+                await signInWithEmailAndPassword(auth, email, senha);
+                console.log("Usuário autenticado com e-mail e senha!");
+            } catch (error) {
                 alert("Erro ao autenticar: " + error.message);
+            }
+        }
+
+        // ✅ Função para Criar Conta com E-mail e Senha
+        async function registrar() {
+            const email = document.getElementById("email").value;
+            const senha = document.getElementById("senha").value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, senha);
+                alert("Conta criada com sucesso!");
+            } catch (error) {
+                alert("Erro ao criar conta: " + error.message);
             }
         }
 
@@ -55,57 +78,6 @@
             }
         }
 
-        // ✅ Função para carregar processos do Firestore
-        async function carregarDadosFirestore() {
-            const user = auth.currentUser;
-            if (!user) {
-                alert("Você precisa estar autenticado para acessar os processos.");
-                return;
-            }
-
-            try {
-                const processosRef = collection(db, 'processos');
-                const snapshot = await getDocs(processosRef);
-                const dados = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                preencherTabela(dados);
-            } catch (erro) {
-                console.error("Erro ao carregar dados:", erro);
-                alert("Erro ao carregar dados: " + erro.message);
-            }
-        }
-
-        // ✅ Função para adicionar um novo processo
-        async function adicionarProcesso() {
-            const numero = prompt("Número do Processo:");
-            const data = prompt("Data de Entrada:");
-            const assunto = prompt("Assunto:");
-            const andamento = prompt("Andamento:");
-            const link = prompt("Link:");
-            const prazo = prompt("Prazo:");
-
-            if (numero && data && assunto && andamento && link && prazo) {
-                await addDoc(collection(db, "processos"), {
-                    numero, data, assunto, andamento, link, prazo
-                });
-                alert("Processo adicionado com sucesso!");
-                carregarDadosFirestore();
-            } else {
-                alert("Todos os campos são obrigatórios!");
-            }
-        }
-
-        // ✅ Função para editar um processo
-        async function editarProcesso(id) {
-            const novoAndamento = prompt("Atualize o andamento do processo:");
-            if (novoAndamento) {
-                const processoRef = doc(db, "processos", id);
-                await updateDoc(processoRef, { andamento: novoAndamento });
-                alert("Processo atualizado com sucesso!");
-                carregarDadosFirestore();
-            }
-        }
-
         // ✅ Atualiza interface ao mudar estado de autenticação
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById("loginScreen");
@@ -114,7 +86,7 @@
             if (user) {
                 loginScreen.style.display = "none";
                 appScreen.style.display = "block";
-                document.getElementById("status").innerText = `Logado como: ${user.displayName}`;
+                document.getElementById("status").innerText = `Logado como: ${user.email || user.displayName}`;
                 carregarDadosFirestore();
             } else {
                 loginScreen.style.display = "block";
@@ -122,31 +94,11 @@
             }
         });
 
-        // ✅ Função para preencher a tabela com os dados do Firestore
-        function preencherTabela(dados) {
-            const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
-            tabela.innerHTML = "";
-
-            dados.forEach(d => {
-                const linha = `<tr>
-                    <td>${d.numero}</td>
-                    <td>${d.data}</td>
-                    <td>${d.assunto}</td>
-                    <td>${d.andamento}</td>
-                    <td><a href="${d.link}" target="_blank">Abrir</a></td>
-                    <td>${d.prazo}</td>
-                    <td><button onclick="editarProcesso('${d.id}')">✏️ Editar</button></td>
-                </tr>`;
-                tabela.insertAdjacentHTML('beforeend', linha);
-            });
-        }
-
         // Disponibilizar funções globalmente
-        window.login = login;
+        window.loginGoogle = loginGoogle;
+        window.loginEmailSenha = loginEmailSenha;
+        window.registrar = registrar;
         window.logout = logout;
-        window.carregarDadosFirestore = carregarDadosFirestore;
-        window.adicionarProcesso = adicionarProcesso;
-        window.editarProcesso = editarProcesso;
     </script>
 
     <style>
@@ -155,6 +107,7 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid black; padding: 8px; }
         th { background-color: #4CAF50; color: white; }
+        input { padding: 8px; margin: 5px; width: 250px; }
     </style>
 </head>
 <body>
@@ -162,32 +115,4 @@
     <!-- ✅ Tela de Login -->
     <div id="loginScreen">
         <h2>Faça login para acessar o sistema</h2>
-        <button onclick="login()">🔑 Login com Google</button>
-    </div>
-
-    <!-- ✅ Tela do Aplicativo -->
-    <div id="appScreen" style="display: none;">
-        <h1>Controle de Processos - NUP</h1>
-        <div id="status"></div>
-        <button onclick="logout()">🚪 Sair</button>
-        <button onclick="adicionarProcesso()">➕ Adicionar Processo</button>
-        <button onclick="carregarDadosFirestore()">🔄 Recarregar Processos</button>
-
-        <table id="tabelaProcessos">
-            <thead>
-                <tr>
-                    <th>Número</th>
-                    <th>Data Entrada</th>
-                    <th>Assunto</th>
-                    <th>Andamento</th>
-                    <th>Link</th>
-                    <th>Prazo</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-</body>
-</html>
+        <input type="email" 
