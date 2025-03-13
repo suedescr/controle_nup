@@ -9,7 +9,7 @@
         // ✅ Importação do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // ✅ Configuração do Firebase
         const firebaseConfig = {
@@ -27,7 +27,6 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // ✅ Definir parâmetros do Google para evitar erro de domínio
         provider.setCustomParameters({ prompt: "select_account" });
 
         // ✅ Função de Login com Google
@@ -48,143 +47,4 @@
                 await signInWithEmailAndPassword(auth, email, senha);
                 console.log("Usuário autenticado com e-mail e senha!");
             } catch (error) {
-                alert("Erro ao autenticar: " + error.message);
-            }
-        }
-
-        // ✅ Função para Criar Conta com E-mail e Senha
-        async function registrar() {
-            const email = document.getElementById("email").value;
-            const senha = document.getElementById("senha").value;
-
-            if (senha.length < 6) {
-                alert("A senha deve ter pelo menos 6 caracteres.");
-                return;
-            }
-
-            try {
-                await createUserWithEmailAndPassword(auth, email, senha);
-                alert("Conta criada com sucesso! Agora faça login.");
-            } catch (error) {
-                alert("Erro ao criar conta: " + error.message);
-            }
-        }
-
-        // ✅ Função de Logout
-        async function logout() {
-            try {
-                await signOut(auth);
-                console.log("Usuário deslogado!");
-                window.location.reload();
-            } catch (error) {
-                console.error("Erro ao sair:", error);
-            }
-        }
-
-        // ✅ Atualiza interface ao mudar estado de autenticação
-        onAuthStateChanged(auth, (user) => {
-            const loginScreen = document.getElementById("loginScreen");
-            const appScreen = document.getElementById("appScreen");
-
-            if (user) {
-                loginScreen.style.display = "none";
-                appScreen.style.display = "block";
-                document.getElementById("status").innerText = `Logado como: ${user.email || user.displayName}`;
-
-                // ✅ Carrega os dados ao entrar
-                carregarDadosFirestore();
-            } else {
-                loginScreen.style.display = "block";
-                appScreen.style.display = "none";
-            }
-        });
-
-        // ✅ Função para carregar os processos do Firestore
-        async function carregarDadosFirestore() {
-            try {
-                const processosRef = collection(db, 'processos');
-                const snapshot = await getDocs(processosRef);
-                const dados = snapshot.docs.map(doc => doc.data());
-
-                console.log("Dados carregados:", dados);
-
-                if (dados.length === 0) {
-                    alert("Nenhum processo encontrado.");
-                } else {
-                    preencherTabela(dados);
-                }
-            } catch (erro) {
-                console.error("Erro ao carregar processos:", erro);
-                alert("Erro ao carregar processos: " + erro.message);
-            }
-        }
-
-        // ✅ Função para preencher a tabela
-        function preencherTabela(dados) {
-            const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
-            tabela.innerHTML = "";
-
-            dados.forEach(d => {
-                const linha = `<tr>
-                    <td>${d.numero || 'N/A'}</td>
-                    <td>${d.data || 'N/A'}</td>
-                    <td>${d.assunto || 'N/A'}</td>
-                    <td>${d.andamento || 'N/A'}</td>
-                    <td><a href="${d.link}" target="_blank">Abrir</a></td>
-                    <td>${d.prazo || 'N/A'}</td>
-                </tr>`;
-                tabela.insertAdjacentHTML('beforeend', linha);
-            });
-        }
-
-        // ✅ Disponibilizar funções globalmente
-        window.loginGoogle = loginGoogle;
-        window.loginEmailSenha = loginEmailSenha;
-        window.registrar = registrar;
-        window.logout = logout;
-    </script>
-
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        button { padding: 10px; margin: 5px; cursor: pointer; background: #4CAF50; color: white; border: none; }
-        input { padding: 8px; margin: 5px; width: 250px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid black; padding: 8px; }
-        th { background-color: #4CAF50; color: white; }
-    </style>
-</head>
-<body>
-
-    <!-- ✅ Tela de Login -->
-    <div id="loginScreen">
-        <h2>Faça login para acessar o sistema</h2>
-        <input type="email" id="email" placeholder="Digite seu e-mail">
-        <input type="password" id="senha" placeholder="Digite sua senha">
-        <button onclick="loginEmailSenha()">🔑 Login</button>
-        <button onclick="registrar()">📝 Criar Conta</button>
-        <hr>
-        <button onclick="loginGoogle()">🔵 Login com Google</button>
-    </div>
-
-    <!-- ✅ Tela do Aplicativo -->
-    <div id="appScreen" style="display: none;">
-        <h1>Controle de Processos - NUP</h1>
-        <div id="status"></div>
-        <button onclick="logout()">🚪 Sair</button>
-        <table id="tabelaProcessos">
-            <thead>
-                <tr>
-                    <th>Número</th>
-                    <th>Data Entrada</th>
-                    <th>Assunto</th>
-                    <th>Andamento</th>
-                    <th>Link</th>
-                    <th>Prazo</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-</body>
-</html>
+                alert("Erro
