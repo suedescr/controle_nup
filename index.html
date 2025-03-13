@@ -4,17 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Processos - NUP</title>
+</head>
+<body>
+    <h1>Controle de Processos - NUP</h1>
+    <div id="status"></div>
+    <button onclick="logout()">🚪 Sair</button>
+
+    <h2>Cadastro de Processo</h2>
+    <input id="numero" placeholder="Número do Processo">
+    <input id="data" type="date">
+    <input id="assunto" placeholder="Assunto">
+    <input id="andamento" placeholder="Andamento">
+    <input id="link" placeholder="Link">
+    <input id="prazo" placeholder="Prazo">
+    <button onclick="cadastrarProcesso()">➕ Cadastrar Processo</button>
+
+    <h2>Processos</h2>
+    <table id="tabelaProcessos">
+        <thead>
+            <tr>
+                <th>Número</th>
+                <th>Data</th>
+                <th>Assunto</th>
+                <th>Andamento</th>
+                <th>Link</th>
+                <th>Prazo</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
     <script type="module">
         try {
-            // ✅ Importação do Firebase
+            console.log("✅ Iniciando carregamento do Firebase...");
+
             import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
             import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
             import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-            console.log("✅ Firebase importado com sucesso!");
+            console.log("✅ Firebase carregado com sucesso!");
 
-            // ✅ Configuração do Firebase
             const firebaseConfig = {
                 apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
                 authDomain: "controle-processo-nup.firebaseapp.com",
@@ -24,104 +53,15 @@
                 appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
             };
 
-            // ✅ Inicializa Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
             const provider = new GoogleAuthProvider();
 
-            console.log("✅ Firebase inicializado!");
+            console.log("✅ Firebase inicializado com sucesso!");
 
             provider.setCustomParameters({ prompt: "select_account" });
 
-            // ✅ Função de Login com Google
-            async function loginGoogle() {
-                try {
-                    await signInWithPopup(auth, provider);
-                    console.log("Usuário autenticado com Google!");
-                } catch (error) {
-                    alert("Erro ao autenticar com Google: " + error.message);
-                }
-            }
-
-            // ✅ Função de Login com E-mail e Senha
-            async function loginEmailSenha() {
-                const email = document.getElementById("email").value;
-                const senha = document.getElementById("senha").value;
-                try {
-                    await signInWithEmailAndPassword(auth, email, senha);
-                    console.log("Usuário autenticado com e-mail e senha!");
-                } catch (error) {
-                    alert("Erro ao autenticar: " + error.message);
-                }
-            }
-
-            // ✅ Função para Criar Conta com E-mail e Senha
-            async function registrar() {
-                const email = document.getElementById("email").value;
-                const senha = document.getElementById("senha").value;
-
-                if (senha.length < 6) {
-                    alert("A senha deve ter pelo menos 6 caracteres.");
-                    return;
-                }
-
-                try {
-                    await createUserWithEmailAndPassword(auth, email, senha);
-                    alert("Conta criada com sucesso! Agora faça login.");
-                } catch (error) {
-                    alert("Erro ao criar conta: " + error.message);
-                }
-            }
-
-            // ✅ Função de Logout
-            async function logout() {
-                try {
-                    await signOut(auth);
-                    console.log("Usuário deslogado!");
-                    window.location.reload();
-                } catch (error) {
-                    console.error("Erro ao sair:", error);
-                }
-            }
-
-            // ✅ Atualiza interface ao mudar estado de autenticação
-            onAuthStateChanged(auth, (user) => {
-                const loginScreen = document.getElementById("loginScreen");
-                const appScreen = document.getElementById("appScreen");
-
-                if (user) {
-                    loginScreen.style.display = "none";
-                    appScreen.style.display = "block";
-                    document.getElementById("status").innerText = `Logado como: ${user.email || user.displayName}`;
-                    carregarDadosFirestore();
-                } else {
-                    loginScreen.style.display = "block";
-                    appScreen.style.display = "none";
-                }
-            });
-
-            // ✅ Função para carregar os processos do Firestore
-            async function carregarDadosFirestore() {
-                try {
-                    const processosRef = collection(db, 'processos');
-                    const snapshot = await getDocs(processosRef);
-                    const dados = snapshot.docs.map(doc => doc.data());
-
-                    console.log("📄 Dados carregados:", dados);
-
-                    if (dados.length === 0) {
-                        alert("Nenhum processo encontrado.");
-                    } else {
-                        preencherTabela(dados);
-                    }
-                } catch (erro) {
-                    console.error("Erro ao carregar processos:", erro);
-                    alert("Erro ao carregar processos: " + erro.message);
-                }
-            }
-
-            // ✅ Função para cadastrar um novo processo no Firestore
             async function cadastrarProcesso() {
                 const numero = document.getElementById("numero").value;
                 const data = document.getElementById("data").value;
@@ -140,14 +80,32 @@
                         prazo
                     });
                     alert("Processo cadastrado com sucesso!");
-                    carregarDadosFirestore(); // Atualiza a tabela
+                    carregarDadosFirestore();
                 } catch (erro) {
-                    console.error("Erro ao cadastrar processo:", erro);
+                    console.error("❌ Erro ao cadastrar processo:", erro);
                     alert("Erro ao cadastrar processo: " + erro.message);
                 }
             }
 
-            // ✅ Função para preencher a tabela
+            async function carregarDadosFirestore() {
+                try {
+                    const processosRef = collection(db, 'processos');
+                    const snapshot = await getDocs(processosRef);
+                    const dados = snapshot.docs.map(doc => doc.data());
+
+                    console.log("📄 Dados carregados:", dados);
+
+                    if (dados.length === 0) {
+                        alert("Nenhum processo encontrado.");
+                    } else {
+                        preencherTabela(dados);
+                    }
+                } catch (erro) {
+                    console.error("❌ Erro ao carregar processos:", erro);
+                    alert("Erro ao carregar processos: " + erro.message);
+                }
+            }
+
             function preencherTabela(dados) {
                 const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
                 tabela.innerHTML = "";
@@ -157,36 +115,3 @@
                         <td>${d.numero || 'N/A'}</td>
                         <td>${d.data || 'N/A'}</td>
                         <td>${d.assunto || 'N/A'}</td>
-                        <td>${d.andamento || 'N/A'}</td>
-                        <td><a href="${d.link}" target="_blank">Abrir</a></td>
-                        <td>${d.prazo || 'N/A'}</td>
-                    </tr>`;
-                    tabela.insertAdjacentHTML('beforeend', linha);
-                });
-            }
-
-            window.loginGoogle = loginGoogle;
-            window.loginEmailSenha = loginEmailSenha;
-            window.registrar = registrar;
-            window.logout = logout;
-            window.cadastrarProcesso = cadastrarProcesso;
-
-        } catch (erro) {
-            console.error("Erro geral no script:", erro);
-            alert("Ocorreu um erro ao carregar a página. Verifique o console para mais detalhes.");
-        }
-    </script>
-
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        button { padding: 10px; margin: 5px; cursor: pointer; background: #4CAF50; color: white; border: none; }
-        input { padding: 8px; margin: 5px; width: 250px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid black; padding: 8px; }
-        th { background-color: #4CAF50; color: white; }
-    </style>
-</head>
-<body>
-    <h1>Se aparecer erro, abra o console (F12) e veja os detalhes!</h1>
-</body>
-</html>
