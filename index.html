@@ -1,117 +1,159 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Processos - NUP</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastro de Processos</title>
+  <!-- CSS do Bootstrap para layout e estilos -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 <body>
-    <h1>Controle de Processos - NUP</h1>
-    <div id="status"></div>
-    <button onclick="logout()">🚪 Sair</button>
-
-    <h2>Cadastro de Processo</h2>
-    <input id="numero" placeholder="Número do Processo">
-    <input id="data" type="date">
-    <input id="assunto" placeholder="Assunto">
-    <input id="andamento" placeholder="Andamento">
-    <input id="link" placeholder="Link">
-    <input id="prazo" placeholder="Prazo">
-    <button onclick="cadastrarProcesso()">➕ Cadastrar Processo</button>
-
-    <h2>Processos</h2>
-    <table id="tabelaProcessos">
-        <thead>
-            <tr>
-                <th>Número</th>
-                <th>Data</th>
-                <th>Assunto</th>
-                <th>Andamento</th>
-                <th>Link</th>
-                <th>Prazo</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
+  <div class="container mt-4">
+    <h1 class="mb-4">Cadastro de Processos</h1>
+    
+    <!-- Formulário de cadastro de novo processo -->
+    <form id="processForm">
+      <div class="form-group row">
+        <label for="inputNUP" class="col-sm-2 col-form-label">NUP:</label>
+        <div class="col-sm-10">
+          <input type="text" id="inputNUP" class="form-control" placeholder="Número Único do Processo" required />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="inputAssunto" class="col-sm-2 col-form-label">Assunto:</label>
+        <div class="col-sm-10">
+          <input type="text" id="inputAssunto" class="form-control" placeholder="Assunto do Processo" required />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="inputInteressado" class="col-sm-2 col-form-label">Interessado:</label>
+        <div class="col-sm-10">
+          <input type="text" id="inputInteressado" class="form-control" placeholder="Parte interessada" required />
+        </div>
+      </div>
+      <button type="submit" id="btnSalvar" class="btn btn-primary">Salvar</button>
+    </form>
+    
+    <!-- Botão de Logout (visível somente se usuário estiver autenticado) -->
+    <button id="btnLogout" class="btn btn-secondary mt-3">Logout</button>
+    
+    <!-- Mensagem de orientação -->
+    <p class="mt-3"><em>Se aparecer erro, abra o console (F12) e veja os detalhes!</em></p>
+    
+    <!-- Tabela de processos cadastrados -->
+    <h2 class="mt-4">Processos Cadastrados</h2>
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th>NUP</th>
+          <th>Assunto</th>
+          <th>Interessado</th>
+        </tr>
+      </thead>
+      <tbody id="processTableBody">
+        <!-- Linhas inseridas dinamicamente via JS -->
+      </tbody>
     </table>
-
-    <script type="module">
-        try {
-            console.log("✅ Iniciando carregamento do Firebase...");
-
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-            import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-            import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-            console.log("✅ Firebase carregado com sucesso!");
-
-            const firebaseConfig = {
-                apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
-                authDomain: "controle-processo-nup.firebaseapp.com",
-                projectId: "controle-processo-nup",
-                storageBucket: "controle-processo-nup.appspot.com",
-                messagingSenderId: "375467007404",
-                appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
-            };
-
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const provider = new GoogleAuthProvider();
-
-            console.log("✅ Firebase inicializado com sucesso!");
-
-            provider.setCustomParameters({ prompt: "select_account" });
-
-            async function cadastrarProcesso() {
-                const numero = document.getElementById("numero").value;
-                const data = document.getElementById("data").value;
-                const assunto = document.getElementById("assunto").value;
-                const andamento = document.getElementById("andamento").value;
-                const link = document.getElementById("link").value;
-                const prazo = document.getElementById("prazo").value;
-
-                try {
-                    await addDoc(collection(db, "processos"), {
-                        numero,
-                        data,
-                        assunto,
-                        andamento,
-                        link,
-                        prazo
-                    });
-                    alert("Processo cadastrado com sucesso!");
-                    carregarDadosFirestore();
-                } catch (erro) {
-                    console.error("❌ Erro ao cadastrar processo:", erro);
-                    alert("Erro ao cadastrar processo: " + erro.message);
-                }
-            }
-
-            async function carregarDadosFirestore() {
-                try {
-                    const processosRef = collection(db, 'processos');
-                    const snapshot = await getDocs(processosRef);
-                    const dados = snapshot.docs.map(doc => doc.data());
-
-                    console.log("📄 Dados carregados:", dados);
-
-                    if (dados.length === 0) {
-                        alert("Nenhum processo encontrado.");
-                    } else {
-                        preencherTabela(dados);
-                    }
-                } catch (erro) {
-                    console.error("❌ Erro ao carregar processos:", erro);
-                    alert("Erro ao carregar processos: " + erro.message);
-                }
-            }
-
-            function preencherTabela(dados) {
-                const tabela = document.getElementById("tabelaProcessos").querySelector("tbody");
-                tabela.innerHTML = "";
-
-                dados.forEach(d => {
-                    const linha = `<tr>
-                        <td>${d.numero || 'N/A'}</td>
-                        <td>${d.data || 'N/A'}</td>
-                        <td>${d.assunto || 'N/A'}</td>
+  </div>
+  
+  <!-- Scripts do Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  
+  <!-- Script principal -->
+  <script>
+    // Configurações do Firebase (substitua pelos dados do seu projeto)
+    var firebaseConfig = {
+      apiKey: "SUAS-CHAVES-AQUI",
+      authDomain: "SEU-PROJETO.firebaseapp.com",
+      projectId: "SEU-PROJETO",
+      storageBucket: "SEU-PROJETO.appspot.com",
+      messagingSenderId: "SEU-ID",
+      appId: "SEU-APP-ID"
+    };
+    // Inicializa o Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    // Monitora o estado de autenticação do usuário
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // Se não estiver logado, redireciona para a página de login (ou exibe mensagem, conforme necessidade)
+        console.warn("Usuário não autenticado! Redirecionando para login...");
+        window.location.href = "login.html";  // *ajuste a URL se necessário ou remova se não houver página de login*
+      } else {
+        console.log("Usuário autenticado:", user.email);
+      }
+    });
+    
+    // Logout do usuário atual ao clicar no botão "Logout"
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        console.log("Usuário desconectado.");
+        window.location.href = "login.html"; // redireciona para login após logout
+      }).catch((error) => {
+        console.error("Erro ao fazer logout:", error);
+      });
+    });
+    
+    // Cadastro de novo processo ao enviar o formulário
+    document.getElementById('processForm').addEventListener('submit', (e) => {
+      e.preventDefault(); // evita recarregar a página
+      
+      // Obtém valores dos campos
+      const nup = document.getElementById('inputNUP').value.trim();
+      const assunto = document.getElementById('inputAssunto').value.trim();
+      const interessado = document.getElementById('inputInteressado').value.trim();
+      
+      if (nup === "" || assunto === "" || interessado === "") {
+        alert("Por favor, preencha todos os campos.");
+        return;
+      }
+      
+      // Adiciona documento na coleção "processos"
+      db.collection('processos').add({
+        nup: nup,
+        assunto: assunto,
+        interessado: interessado,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()  // data/hora do cadastro
+      })
+      .then(() => {
+        console.log("Processo cadastrado com sucesso!");
+        document.getElementById('processForm').reset(); // limpa o formulário
+      })
+      .catch((error) => {
+        console.error("Erro ao cadastrar processo:", error);
+        alert("Erro ao cadastrar processo. Verifique o console para mais detalhes.");
+      });
+    });
+    
+    // Carrega e exibe os processos em tempo real na tabela
+    db.collection('processos').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
+      const tableBody = document.getElementById('processTableBody');
+      tableBody.innerHTML = ""; // limpa a tabela antes de reconstruir
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        // Cria uma nova linha na tabela
+        const row = document.createElement('tr');
+        // Células da linha
+        const cellNUP = document.createElement('td');
+        const cellAssunto = document.createElement('td');
+        const cellInteressado = document.createElement('td');
+        cellNUP.textContent = data.nup || "";
+        cellAssunto.textContent = data.assunto || "";
+        cellInteressado.textContent = data.interessado || "";
+        // Monta a linha e adiciona na tabela
+        row.appendChild(cellNUP);
+        row.appendChild(cellAssunto);
+        row.appendChild(cellInteressado);
+        tableBody.appendChild(row);
+      });
+    }, (error) => {
+      console.error("Erro ao carregar processos:", error);
+    });
+  </script>
+</body>
+</html>
