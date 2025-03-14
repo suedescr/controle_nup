@@ -1,15 +1,16 @@
-// ✅ Importação correta do Firebase para uso no GitHub Pages
+// ✅ Importação correta do Firebase para GitHub Pages (usando CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
-// ✅ Configuração correta do Firebase
+// ✅ Configuração correta do Firebase (extraída da sua tela)
 const firebaseConfig = {
-    apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJgcA",
+    apiKey: "AIzaSyBHDwatGIjcMmFXmbdw_kH4dQW-xtZJcA",
     authDomain: "controle-processo-nup.firebaseapp.com",
     projectId: "controle-processo-nup",
     storageBucket: "controle-processo-nup.appspot.com",
     messagingSenderId: "375467007404",
-    appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09"
+    appId: "1:375467007404:web:5f3942fcb6d6aa4d26ee09",
+    measurementId: "G-KPKEEKG75W"
 };
 
 // ✅ Inicializa Firebase
@@ -34,4 +35,7 @@ window.loginGoogle = async function() {
     try {
         await signInWithPopup(auth, provider);
         window.location.href = "index.html";
-  
+    } catch (error) {
+        alert("Erro ao fazer login com Google: " + error.message);
+    }
+};
