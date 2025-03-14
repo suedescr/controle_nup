@@ -3,52 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Página de Login</title>
+    <link rel="stylesheet" href="styles.css"> <!-- ✅ Carrega o CSS -->
 </head>
 <body>
-    <h1>Página de Login</h1>
-    <p>Faça login para acessar o sistema.</p>
-    <input type="email" id="email" placeholder="E-mail">
-    <input type="password" id="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-    <button onclick="loginGoogle()">Entrar com Google</button>
+    <div class="login-container">
+        <h2>🔐 Página de Login</h2>
+        <p>Faça login para acessar o sistema.</p>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        <input type="email" id="email" placeholder="E-mail">
+        <input type="password" id="password" placeholder="Senha">
+        <button onclick="login()">Entrar</button>
+        <button onclick="loginGoogle()">🔵 Entrar com Google</button>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "SUA-CHAVE",
-            authDomain: "SEU-PROJETO.firebaseapp.com",
-            projectId: "SEU-PROJETO",
-            storageBucket: "SEU-PROJETO.appspot.com",
-            messagingSenderId: "SEU-ID",
-            appId: "SEU-APP-ID"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-
-        window.login = async function() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                window.location.href = "index.html";  // Redireciona para a página principal após login
-            } catch (error) {
-                alert("Erro ao fazer login: " + error.message);
-            }
-        };
-
-        window.loginGoogle = async function() {
-            try {
-                await signInWithPopup(auth, provider);
-                window.location.href = "index.html"; 
-            } catch (error) {
-                alert("Erro ao fazer login com Google: " + error.message);
-            }
-        };
-    </script>
+    <script src="script.js" type="module"></script> <!-- ✅ Carrega o JavaScript -->
 </body>
 </html>
